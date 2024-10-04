@@ -4,6 +4,9 @@ schema:
   tables:
     - name: user
       fields:
+        - name: user_id
+          type: int
+          is_primary_key: true
         - name: name
           type: string
         - name: age
@@ -12,6 +15,9 @@ schema:
           type: timestamp
     - name: note
       fields:
+        - name: note_id
+          type: int
+          is_primary_key: true
         - name: title
           type: string
         - name: body
