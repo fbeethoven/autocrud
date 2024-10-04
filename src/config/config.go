@@ -8,10 +8,16 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const (
+	FieldInt       string = "int"
+	FieldString    string = "string"
+	FieldTimestamp string = "timestamp"
+)
+
 var validFields = map[string]int{
-	"int":       1,
-	"string":    1,
-	"timestamp": 1,
+	FieldInt:       1,
+	FieldString:    1,
+	FieldTimestamp: 1,
 }
 
 type Config struct {
@@ -21,8 +27,9 @@ type Config struct {
 }
 
 type FieldSchema struct {
-	Name string `yaml:"name"`
-	Type string `yaml:"type"`
+	Name         string `yaml:"name"`
+	Type         string `yaml:"type"`
+	IsPrimaryKey bool   `yaml:"is_primary_key"`
 }
 
 type TableSchema struct {
@@ -33,6 +40,11 @@ type TableSchema struct {
 type Schema struct {
 	Tables []TableSchema `yaml:"tables"`
 }
+
+const (
+	UnknownFieldError string = "unknown field"
+	NoPrimaryKeyError string = "no primary key in table"
+)
 
 func Parse(configPath string) (Config, error) {
 	file, err := os.Open(configPath)
@@ -61,10 +73,18 @@ func Parse(configPath string) (Config, error) {
 
 func validateSchema(schema Schema) error {
 	for _, table := range schema.Tables {
+		foundPrinmaryKey := false
 		for _, field := range table.Fields {
 			if _, ok := validFields[field.Type]; !ok {
-				return fmt.Errorf("unknown field: %s", field.Type)
+				return fmt.Errorf("%s: %s", UnknownFieldError, field.Type)
 			}
+			if field.IsPrimaryKey {
+				foundPrinmaryKey = true
+			}
+		}
+
+		if !foundPrinmaryKey {
+			return fmt.Errorf("%s: %s", NoPrimaryKeyError, table.Name)
 		}
 	}
 	return nil
