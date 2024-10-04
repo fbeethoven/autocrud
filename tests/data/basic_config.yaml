@@ -1,0 +1,23 @@
+name: TestAPI
+version: 0.1.0
+schema:
+  tables:
+    - name: user
+      fields:
+        - name: name
+          type: string
+        - name: age
+          type: int
+        - name: created_at
+          type: timestamp
+    - name: note
+      fields:
+        - name: title
+          type: string
+        - name: body
+          type: string
+        - name: created_at
+          type: timestamp
+        - name: updated_at
+          type: timestamp
+
