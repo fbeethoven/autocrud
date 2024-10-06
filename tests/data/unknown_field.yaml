@@ -1,5 +1,5 @@
 name: TestAPI
-version: 0.1.0
+version: v0.1.0
 schema:
   tables:
     - name: user

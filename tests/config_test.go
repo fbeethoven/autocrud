@@ -11,7 +11,7 @@ import (
 func TestConfig(t *testing.T) {
 	expected := config.Config{
 		Name:    "TestAPI",
-		Version: "0.1.0",
+		Version: "v0.1.0",
 		Schema: config.Schema{
 			Tables: []config.TableSchema{
 				{

@@ -14,6 +14,8 @@ const (
 	FieldTimestamp string = "timestamp"
 )
 
+var Version string = "v0.1.0"
+
 var validFields = map[string]int{
 	FieldInt:       1,
 	FieldString:    1,
@@ -85,7 +87,7 @@ func Parse(configPath string) (Config, error) {
 		return Config{}, err
 	}
 
-	if config.Version != "0.1.0" {
+	if config.Version != Version {
 		return Config{}, errors.New("unknown version")
 	}
 

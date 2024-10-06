@@ -7,6 +7,8 @@ Automatically generate REST APIs
  - [X] validate yaml schema.
  - [X] create sqlite db from yaml schema with a simple resource.
         only types available will be INT, VARCHAR, TIMESTAMP, VARTEXT
+ - [X] write test for codegen.
+ - [X] workout absolute path for codegen templates.
  - [ ] rest api to create and read a single resource:
    - [ ] create resource from a single table.
    - [ ] read resource from a single table.
