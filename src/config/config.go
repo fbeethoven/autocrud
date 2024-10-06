@@ -46,6 +46,31 @@ const (
 	NoPrimaryKeyError string = "no primary key in table"
 )
 
+func MakeDir(projectPath string) error {
+	_, err := os.Stat(projectPath)
+	if !os.IsNotExist(err) {
+		return fmt.Errorf("could not create directory %s", projectPath)
+	}
+
+	err = os.Mkdir(projectPath, 0755)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func MakeRelativeDir(parentDir, dirPath string) error {
+	directoryPath := fmt.Sprintf("./%s/%s", parentDir, dirPath)
+
+	err := MakeDir(directoryPath)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func Parse(configPath string) (Config, error) {
 	file, err := os.Open(configPath)
 	if err != nil {

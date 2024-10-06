@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -12,38 +11,31 @@ import (
 	"autocrud/src/config"
 )
 
-func createDirectory(projectPath string) error {
-	_, err := os.Stat(projectPath)
-	if !os.IsNotExist(err) {
-		return fmt.Errorf("could not create directory %s", projectPath)
-	}
-
-	err = os.Mkdir(projectPath, 0755)
-	if err != nil {
-		return err
-	}
-
-	return nil
+type ProjectDirectories struct {
+	Root     string
+	Database string
+	Backend  string
+	Frontend string
 }
 
-func createProjectDir(config config.Config) (projectDirectories, error) {
-	projectName := strings.ToLower(config.Name)
-	directories := projectDirectories{
-		root:     fmt.Sprintf("./%s", projectName),
-		database: fmt.Sprintf("./%s/database", projectName),
-		backend:  fmt.Sprintf("./%s/backend", projectName),
-		frontend: fmt.Sprintf("./%s/frontend", projectName),
+func createProjectDir(conf config.Config) (ProjectDirectories, error) {
+	projectName := strings.ToLower(conf.Name)
+	directories := ProjectDirectories{
+		Root:     fmt.Sprintf("./%s", projectName),
+		Database: fmt.Sprintf("./%s/database", projectName),
+		Backend:  fmt.Sprintf("./%s/backend", projectName),
+		Frontend: fmt.Sprintf("./%s/frontend", projectName),
 	}
 
 	for _, path := range []string{
-		directories.root,
-		directories.database,
-		directories.backend,
-		directories.frontend,
+		directories.Root,
+		directories.Database,
+		directories.Backend,
+		directories.Frontend,
 	} {
 
 		log.Printf("creating directory: %s", path)
-		err := createDirectory(path)
+		err := config.MakeDir(path)
 		if err != nil {
 			return directories, err
 		}
@@ -52,33 +44,26 @@ func createProjectDir(config config.Config) (projectDirectories, error) {
 	return directories, nil
 }
 
-type projectDirectories struct {
-	root     string
-	database string
-	backend  string
-	frontend string
-}
-
-func CreateDbIfNecessary(config config.Config) error {
-	directories, err := createProjectDir(config)
+func CreateDbIfNecessary(conf config.Config) (ProjectDirectories, error) {
+	directories, err := createProjectDir(conf)
 	if err != nil {
-		return err
+		return ProjectDirectories{}, err
 	}
 
-	db, err := sql.Open("sqlite3", directories.database+"/example.db")
+	db, err := sql.Open("sqlite3", directories.Database+"/example.db")
 	if err != nil {
-		return err
+		return ProjectDirectories{}, err
 	}
 	defer db.Close()
 
-	for _, table := range config.Schema.Tables {
+	for _, table := range conf.Schema.Tables {
 		err := createTable(db, table)
 		if err != nil {
-			return err
+			return ProjectDirectories{}, err
 		}
 	}
 
-	return nil
+	return directories, nil
 }
 
 func createTable(db *sql.DB, table config.TableSchema) error {

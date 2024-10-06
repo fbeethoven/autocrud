@@ -16,7 +16,7 @@ func main() {
 
 	log.Printf("%v", config)
 
-	err = database.CreateDbIfNecessary(config)
+	_, err = database.CreateDbIfNecessary(config)
 	if err != nil {
 		log.Printf("%v", config)
 		return
