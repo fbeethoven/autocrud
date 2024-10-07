@@ -6,8 +6,8 @@ import (
     "github.com/gin-contrib/cors"
     "github.com/gin-gonic/gin"
 
-    "{{ .ProjectName }}/src/models"
-    "{{ .ProjectName }}/src/dao"
+    _ "{{ .ProjectName }}/src/models"
+    _ "{{ .ProjectName }}/src/dao"
 )
 
 type ResourceController interface {

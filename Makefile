@@ -4,7 +4,9 @@ all: run clean
 
 run: 
 	go run ./src/main.go ;
-	go run ./myapitest/backend/src/main.go ;
+
+exec:
+	cd myapitest/backend/ && go run ./src/main.go ;
 
 clean: 
 	rm -r myapitest

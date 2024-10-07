@@ -233,6 +233,13 @@ func GenerateControllerRouter(destPath, projName string) error {
 	return nil
 }
 
+type ControllerData struct {
+	Version     string
+	ProjectName string
+	Resource    string
+	ResourceUrl string
+}
+
 func GenerateController(destPath, projName string, table config.TableSchema) error {
 	file := getTemplateDir() + "/resourceController.tmpl"
 
@@ -247,13 +254,13 @@ func GenerateController(destPath, projName string, table config.TableSchema) err
 	}
 	defer internalGenerateBuffer.Close()
 
-	daoData := DAOData{
+	err = t.Execute(f, ControllerData{
 		Version:     config.Version,
 		ProjectName: projName,
 		Resource:    toTitle(table.Name),
-	}
-
-	if err := t.Execute(f, daoData); err != nil {
+		ResourceUrl: table.Name,
+	})
+	if err != nil {
 		return err
 	}
 

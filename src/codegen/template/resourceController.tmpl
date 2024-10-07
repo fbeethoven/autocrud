@@ -3,7 +3,9 @@
 package controller
 
 import (
-    _ "github.com/gin-gonic/gin"
+    "net/http"
+
+    "github.com/gin-gonic/gin"
 
     "{{ .ProjectName }}/src/models"
     "{{ .ProjectName }}/src/dao"
@@ -13,24 +15,26 @@ type {{ .Resource }}Controller struct {
     {{ .Resource }}DAO dao.{{ .Resource}}DAO
 }
 
-func New{{ .Resource }}Controller(resourceDAO dao.{{ .Resource }}DAO) *{{ .Resource }}Controller {
+func New{{ .Resource }}Controller() *{{ .Resource }}Controller {
     return &{{ .Resource }}Controller{
-        {{ .Resource }}DAO: resourceDAO,
+        {{ .Resource }}DAO: dao.{{ .Resource }}DAO{},
     }
 }
 
-func (c {{ .Resource }}Controller) GetResource() ([]models.{{ .Resource }}, error) {
-    result := make([]models.{{ .Resource }}, 0)
-    return result, nil
+func (c {{ .Resource }}Controller) GetResource(ctx *gin.Context) {
+    ctx.JSON(http.StatusOK, make([]models.{{ .Resource }}, 0))
 }
 
-func (c {{ .Resource }}Controller) GetResourceById(_ int) (models.{{ .Resource }}, error) {
-    return models.{{ .Resource }}{}, nil
+func (c {{ .Resource }}Controller) GetResourceById(ctx *gin.Context) {
+    userId := ctx.Param("id")
+    ctx.JSON(http.StatusOK, gin.H{
+        "{{ .Resource }}Id": userId,
+    })
 }
 
 func (c {{ .Resource }}Controller) RegisterResource(controller *Controller) {
     controller.Resources = append(controller.Resources, c)
 
-    controller.Router.GET("/wpm", c.GetResource)
-    controller.Router.GET("/wpm/{id}", c.GetResourceById)
+    controller.Router.GET("/{{ .ResourceUrl }}", c.GetResource)
+    controller.Router.GET("/{{ .ResourceUrl }}/:id", c.GetResourceById)
 }

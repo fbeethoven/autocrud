@@ -3,8 +3,6 @@
 package main
 
 import (
-    "fmt"
-
     "{{ .ProjectName }}/src/controller"
 )
 
@@ -13,7 +11,7 @@ func main() {
     server.Run(
         "localhost:8080",
 {{ range .Controllers }}
-        controller.New{{ . }}Controller(server),
+        controller.New{{ . }}Controller(),
 {{ end }}
     )
 }

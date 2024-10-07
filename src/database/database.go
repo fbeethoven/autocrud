@@ -50,7 +50,10 @@ func CreateDbIfNecessary(conf config.Config) (ProjectDirectories, error) {
 		return ProjectDirectories{}, err
 	}
 
-	db, err := sql.Open("sqlite3", directories.Database+"/example.db")
+	databasePath := fmt.Sprintf("%s/%s.db", directories.Database,
+		strings.ToLower(conf.Name))
+
+	db, err := sql.Open("sqlite3", databasePath)
 	if err != nil {
 		return ProjectDirectories{}, err
 	}

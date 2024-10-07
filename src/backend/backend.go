@@ -2,7 +2,6 @@ package backend
 
 import (
 	"fmt"
-	"strings"
 
 	"autocrud/src/codegen"
 	"autocrud/src/config"
@@ -29,7 +28,7 @@ func New(
 }
 
 func (b BackendGeneratorImpl) Generate() error {
-	projectName := strings.ToLower(b.Config.Name)
+	projectName := "backend"
 	err := config.MultiRunCmdInDir(
 		b.Directories.Backend,
 		config.Command{

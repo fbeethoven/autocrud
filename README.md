@@ -30,3 +30,4 @@ Automatically generate REST APIs
  - [ ] dockerize frontend
  - [ ] add other django backend.
  - [ ] add other views in frontend: eg cards, complex tables, images
+ - [ ] add migrations table and go script for migrations
