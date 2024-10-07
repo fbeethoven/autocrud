@@ -2,6 +2,7 @@ package backend
 
 import (
 	"fmt"
+	"strings"
 
 	"autocrud/src/codegen"
 	"autocrud/src/config"
@@ -28,15 +29,28 @@ func New(
 }
 
 func (b BackendGeneratorImpl) Generate() error {
+	projectName := strings.ToLower(b.Config.Name)
+	err := config.MultiRunCmdInDir(
+		b.Directories.Backend,
+		config.Command{
+			Cmd:  "go",
+			Args: []string{"mod", "init", projectName},
+		},
+		config.Command{
+			Cmd:  "go",
+			Args: []string{"get", "github.com/gin-gonic/gin"},
+		},
+		config.Command{
+			Cmd:  "go",
+			Args: []string{"get", "github.com/gin-contrib/cors"},
+		},
+	)
+
 	config.MakeRelativeDir(b.Directories.Backend, "src")
 
 	filePath := b.Directories.Backend + "/src/main.go"
 
-	err := codegen.GenerateMain(
-		filePath,
-		"main",
-		"this code was automatically generated",
-	)
+	err = codegen.GenerateMain(filePath, projectName, b.Config)
 	if err != nil {
 		return fmt.Errorf("Error writing to file: %v", err)
 	}
@@ -53,5 +67,33 @@ func (b BackendGeneratorImpl) Generate() error {
 		}
 	}
 
+	config.MakeRelativeDir(b.Directories.Backend+"/src", "dao")
+
+	daoDir := b.Directories.Backend + "/src/dao/"
+	for _, table := range b.Config.Schema.Tables {
+		destination := daoDir + table.Name + "DAO.go"
+		err = codegen.GenerateDAO(destination, projectName, table)
+		if err != nil {
+			return fmt.Errorf("Error writing to file: %v", err)
+		}
+	}
+
+	config.MakeRelativeDir(b.Directories.Backend+"/src", "controller")
+
+	controllerDir := b.Directories.Backend + "/src/controller/"
+
+	destination := controllerDir + "controller.go"
+	err = codegen.GenerateControllerRouter(destination, projectName)
+	if err != nil {
+		return fmt.Errorf("Error writing to file: %v", err)
+	}
+
+	for _, table := range b.Config.Schema.Tables {
+		destination := controllerDir + table.Name + "Controller.go"
+		err = codegen.GenerateController(destination, projectName, table)
+		if err != nil {
+			return fmt.Errorf("Error writing to file: %v", err)
+		}
+	}
 	return nil
 }

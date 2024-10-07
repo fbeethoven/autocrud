@@ -13,9 +13,9 @@ import (
 )
 
 type MainData struct {
-	Version string
-	Package string
-	Message string
+	Version     string
+	ProjectName string
+	Controllers []string
 }
 
 type GenerateBuffer interface {
@@ -55,11 +55,7 @@ func BeginTest(g GenerateBuffer) {
 	internalGenerateBuffer = g
 }
 
-func GenerateMain(
-	destPath string,
-	packageName string,
-	message string,
-) error {
+func GenerateMain(destPath, projName string, conf config.Config) error {
 	file := getTemplateDir() + "/main.tmpl"
 
 	t, err := template.New("main.tmpl").ParseFiles(file)
@@ -73,12 +69,7 @@ func GenerateMain(
 	}
 	defer internalGenerateBuffer.Close()
 
-	data := MainData{
-		Version: config.Version,
-		Package: packageName,
-		Message: message,
-	}
-	if err := t.Execute(f, data); err != nil {
+	if err := t.Execute(f, getMainData(conf, projName)); err != nil {
 		return err
 	}
 
@@ -141,6 +132,19 @@ func toTitle(text string) string {
 	return strings.ToUpper(string(text[0])) + text[1:]
 }
 
+func getMainData(conf config.Config, projName string) MainData {
+	controllers := make([]string, 0, len(conf.Schema.Tables))
+	for _, table := range conf.Schema.Tables {
+		controllers = append(controllers, toTitle(table.Name))
+	}
+
+	return MainData{
+		Version:     config.Version,
+		ProjectName: projName,
+		Controllers: controllers,
+	}
+}
+
 func generateModelData(table config.TableSchema) ModelsData {
 	fields := make([]FieldData, 0, len(table.Fields))
 
@@ -164,4 +168,94 @@ func generateModelData(table config.TableSchema) ModelsData {
 		ResourceName: toTitle(table.Name),
 		Fields:       fields,
 	}
+}
+
+type DAOData struct {
+	Version     string
+	ProjectName string
+	Resource    string
+}
+
+func GenerateDAO(destPath, projName string, table config.TableSchema) error {
+	file := getTemplateDir() + "/resourceDAO.tmpl"
+
+	t, err := template.New("resourceDAO.tmpl").ParseFiles(file)
+	if err != nil {
+		return err
+	}
+
+	f, err := internalGenerateBuffer.CreateBuffer(destPath)
+	if err != nil {
+		return err
+	}
+	defer internalGenerateBuffer.Close()
+
+	daoData := DAOData{
+		Version:     config.Version,
+		ProjectName: projName,
+		Resource:    toTitle(table.Name),
+	}
+
+	if err := t.Execute(f, daoData); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func GenerateControllerRouter(destPath, projName string) error {
+	file := getTemplateDir() + "/controller.tmpl"
+
+	t, err := template.New("controller.tmpl").ParseFiles(file)
+	if err != nil {
+		return err
+	}
+
+	f, err := internalGenerateBuffer.CreateBuffer(destPath)
+	if err != nil {
+		return err
+	}
+	defer internalGenerateBuffer.Close()
+
+	err = t.Execute(f,
+		struct {
+			Version     string
+			ProjectName string
+		}{
+			Version:     config.Version,
+			ProjectName: projName,
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func GenerateController(destPath, projName string, table config.TableSchema) error {
+	file := getTemplateDir() + "/resourceController.tmpl"
+
+	t, err := template.New("resourceController.tmpl").ParseFiles(file)
+	if err != nil {
+		return err
+	}
+
+	f, err := internalGenerateBuffer.CreateBuffer(destPath)
+	if err != nil {
+		return err
+	}
+	defer internalGenerateBuffer.Close()
+
+	daoData := DAOData{
+		Version:     config.Version,
+		ProjectName: projName,
+		Resource:    toTitle(table.Name),
+	}
+
+	if err := t.Execute(f, daoData); err != nil {
+		return err
+	}
+
+	return nil
 }

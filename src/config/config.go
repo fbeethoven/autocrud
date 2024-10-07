@@ -3,7 +3,9 @@ package config
 import (
 	"errors"
 	"fmt"
+	"log"
 	"os"
+	"os/exec"
 
 	"gopkg.in/yaml.v2"
 )
@@ -14,7 +16,7 @@ const (
 	FieldTimestamp string = "timestamp"
 )
 
-var Version string = "v0.1.0"
+const Version string = "v0.1.0"
 
 var validFields = map[string]int{
 	FieldInt:       1,
@@ -114,5 +116,61 @@ func validateSchema(schema Schema) error {
 			return fmt.Errorf("%s: %s", NoPrimaryKeyError, table.Name)
 		}
 	}
+	return nil
+}
+
+func RunCmdInDir(dirPath string, cmd string, args ...string) error {
+	currDir, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	err = os.Chdir(dirPath)
+	if err != nil {
+		return err
+	}
+
+	_, err = exec.Command(cmd, args...).Output()
+	if err != nil {
+		return err
+	}
+
+	err = os.Chdir(currDir)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type Command struct {
+	Cmd  string
+	Args []string
+}
+
+func MultiRunCmdInDir(dirPath string, cmds ...Command) error {
+	currDir, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	err = os.Chdir(dirPath)
+	if err != nil {
+		return err
+	}
+
+	for _, cmd := range cmds {
+		log.Printf("running command: %v", cmd)
+		_, err = exec.Command(cmd.Cmd, cmd.Args...).Output()
+		if err != nil {
+			return err
+		}
+	}
+
+	err = os.Chdir(currDir)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
