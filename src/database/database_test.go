@@ -40,5 +40,63 @@ func TestGetCreateTableQuery(t *testing.T) {
 
 	query := getCreateTableQuery(table)
 
-	assert.Equal(t, query, expected)
+	assert.Equal(t, expected, query)
+}
+
+func TestGetResourceQuery(t *testing.T) {
+	table := config.TableSchema{
+		Name: "user",
+		Fields: []config.FieldSchema{
+			{
+				Name:         "user_id",
+				Type:         "int",
+				IsPrimaryKey: true,
+			},
+			{
+				Name: "name",
+				Type: "string",
+			},
+			{
+				Name: "age",
+				Type: "int",
+			},
+			{
+				Name: "created_at",
+				Type: "timestamp",
+			},
+		},
+	}
+
+	expected := "SELECT * FROM user;"
+
+	assert.Equal(t, expected, GetResourceQuery(table))
+}
+
+func TestGetResourceByIdQuery(t *testing.T) {
+	table := config.TableSchema{
+		Name: "user",
+		Fields: []config.FieldSchema{
+			{
+				Name:         "user_id",
+				Type:         "int",
+				IsPrimaryKey: true,
+			},
+			{
+				Name: "name",
+				Type: "string",
+			},
+			{
+				Name: "age",
+				Type: "int",
+			},
+			{
+				Name: "created_at",
+				Type: "timestamp",
+			},
+		},
+	}
+
+	expected := "SELECT * FROM user WHERE user_id=?;"
+
+	assert.Equal(t, expected, GetResourceByIdQuery(table))
 }

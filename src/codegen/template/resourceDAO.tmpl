@@ -3,16 +3,68 @@
 package dao
 
 import (
+    "database/sql"
+
+    _ "github.com/mattn/go-sqlite3"
+
     "{{ .ProjectName }}/src/models"
 )
 
 type {{ .Resource }}DAO struct {}
 
 func (r {{ .Resource }}DAO) GetResource() ([]models.{{ .Resource }}, error) {
-    result := make([]models.{{ .Resource }}, 0)
-    return result, nil
+    db, err := sql.Open("sqlite3", "{{ .DatabasePath }}")
+    if err != nil {
+        return nil, err
+    }
+    defer db.Close()
+
+    query := "{{ .QueryResource }}"
+
+    rows, err := db.Query(query)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    resources := make([]models.{{ .Resource }}, 0)
+
+    for rows.Next() {
+        resource := models.{{ .Resource }}{}
+        err := rows.Scan(
+{{ range .Fields }}
+            &resource.{{ . }},
+{{ end }}
+        )
+        if err != nil {
+            return nil, err
+        }
+
+        resources = append(resources, resource)
+    }
+
+    return resources, nil
 }
 
-func (r {{ .Resource }}DAO) GetResourceById(_ int) (models.{{ .Resource }}, error) {
-    return models.{{ .Resource }}{}, nil
+func (r {{ .Resource }}DAO) GetResourceById(resourceId string) (*models.{{ .Resource }}, error) {
+    db, err := sql.Open("sqlite3", "{{ .DatabasePath }}")
+    if err != nil {
+        return nil, err
+    }
+    defer db.Close()
+
+    query := "{{ .QueryResourceById }}"
+
+    resource := models.{{ .Resource }}{}
+
+    err = db.QueryRow(query, resourceId).Scan(
+{{ range .Fields }}
+        &resource.{{ . }},
+{{ end }}
+    )
+    if err != nil {
+        return nil, err
+    }
+
+    return &resource, nil
 }

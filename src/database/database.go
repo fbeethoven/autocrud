@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"path/filepath"
 	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -12,19 +13,30 @@ import (
 )
 
 type ProjectDirectories struct {
-	Root     string
-	Database string
-	Backend  string
-	Frontend string
+	Root         string
+	Database     string
+	DatabasePath string
+	Backend      string
+	Frontend     string
 }
 
 func createProjectDir(conf config.Config) (ProjectDirectories, error) {
 	projectName := strings.ToLower(conf.Name)
+	databasePath, err := filepath.Abs(fmt.Sprintf(
+		"./%s/database/%s.db",
+		projectName,
+		strings.ToLower(conf.Name),
+	))
+	if err != nil {
+		return ProjectDirectories{}, err
+	}
+
 	directories := ProjectDirectories{
-		Root:     fmt.Sprintf("./%s", projectName),
-		Database: fmt.Sprintf("./%s/database", projectName),
-		Backend:  fmt.Sprintf("./%s/backend", projectName),
-		Frontend: fmt.Sprintf("./%s/frontend", projectName),
+		Root:         fmt.Sprintf("./%s", projectName),
+		Database:     fmt.Sprintf("./%s/database", projectName),
+		DatabasePath: databasePath,
+		Backend:      fmt.Sprintf("./%s/backend", projectName),
+		Frontend:     fmt.Sprintf("./%s/frontend", projectName),
 	}
 
 	for _, path := range []string{
@@ -34,7 +46,6 @@ func createProjectDir(conf config.Config) (ProjectDirectories, error) {
 		directories.Frontend,
 	} {
 
-		log.Printf("creating directory: %s", path)
 		err := config.MakeDir(path)
 		if err != nil {
 			return directories, err
@@ -50,10 +61,7 @@ func CreateDbIfNecessary(conf config.Config) (ProjectDirectories, error) {
 		return ProjectDirectories{}, err
 	}
 
-	databasePath := fmt.Sprintf("%s/%s.db", directories.Database,
-		strings.ToLower(conf.Name))
-
-	db, err := sql.Open("sqlite3", databasePath)
+	db, err := sql.Open("sqlite3", directories.DatabasePath)
 	if err != nil {
 		return ProjectDirectories{}, err
 	}
@@ -107,13 +115,28 @@ func getCreateTableQuery(table config.TableSchema) string {
 	query += strings.Join(fieldQuery, ",")
 	query += " );"
 
-	/*
-			query := `CREATE TABLE IF NOT EXISTS users (
-		        id INTEGER PRIMARY KEY AUTOINCREMENT,
-		        name TEXT NOT NULL,
-		        age INTEGER
-		    );`
-	*/
-
 	return query
+}
+
+func GetResourceQuery(table config.TableSchema) string {
+	return fmt.Sprintf("SELECT * FROM %s;", table.Name)
+}
+
+func GetResourceByIdQuery(table config.TableSchema) string {
+	resourceIdName := ""
+	for _, field := range table.Fields {
+		if field.IsPrimaryKey {
+			resourceIdName = field.Name
+		}
+	}
+
+	if resourceIdName == "" {
+		return ""
+	}
+
+	return fmt.Sprintf(
+		"SELECT * FROM %s WHERE %s=?;",
+		table.Name,
+		resourceIdName,
+	)
 }

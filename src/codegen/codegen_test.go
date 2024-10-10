@@ -160,35 +160,96 @@ func TestGenerateDAO(t *testing.T) {
 package dao
 
 import (
+    "database/sql"
+
+    _ "github.com/mattn/go-sqlite3"
+
     "test/src/models"
 )
 
 type UserDAO struct {}
 
 func (r UserDAO) GetResource() ([]models.User, error) {
-    result := make([]models.User, 0)
-    return result, nil
+    db, err := sql.Open("sqlite3", "./test.db")
+    if err != nil {
+        return nil, err
+    }
+    defer db.Close()
+
+    query := "SELECT * FROM user;"
+
+    rows, err := db.Query(query)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    resources := make([]models.User, 0)
+
+    for rows.Next() {
+        resource := models.User{}
+        err := rows.Scan(
+
+            &resource.User_id,
+
+            &resource.Created_at,
+
+        )
+        if err != nil {
+            return nil, err
+        }
+
+        resources = append(resources, resource)
+    }
+
+    return resources, nil
 }
 
-func (r UserDAO) GetResourceById(_ int) (models.User, error) {
-    return models.User{}, nil
+func (r UserDAO) GetResourceById(resourceId string) (*models.User, error) {
+    db, err := sql.Open("sqlite3", "./test.db")
+    if err != nil {
+        return nil, err
+    }
+    defer db.Close()
+
+    query := ""
+
+    resource := models.User{}
+
+    err = db.QueryRow(query, resourceId).Scan(
+
+        &resource.User_id,
+
+        &resource.Created_at,
+
+    )
+    if err != nil {
+        return nil, err
+    }
+
+    return &resource, nil
 }
 `
 
-	table := config.TableSchema{
-		Name: "user",
-		Fields: []config.FieldSchema{
-			{
-				Name: "user_id",
-				Type: "int",
-			},
-			{
-				Name: "created_at",
-				Type: "timestamp",
+	daoData := DAOData{
+		ProjectName: "test",
+		Table: config.TableSchema{
+			Name: "user",
+			Fields: []config.FieldSchema{
+				{
+					Name: "user_id",
+					Type: "int",
+				},
+				{
+					Name: "created_at",
+					Type: "timestamp",
+				},
 			},
 		},
+		DatabasePath: "./test.db",
 	}
-	err := GenerateDAO("output.go", "test", table)
+
+	err := GenerateDAO("output.go", daoData)
 
 	assert.NoError(t, err)
 
@@ -208,7 +269,6 @@ import (
 
     "github.com/gin-gonic/gin"
 
-    "test/src/models"
     "test/src/dao"
 )
 
@@ -223,14 +283,23 @@ func NewUserController() *UserController {
 }
 
 func (c UserController) GetResource(ctx *gin.Context) {
-    ctx.JSON(http.StatusOK, make([]models.User, 0))
+    resources, err := c.UserDAO.GetResource()
+    if err != nil {
+        ctx.JSON(http.StatusInternalServerError, err)
+    }
+
+    ctx.JSON(http.StatusOK, resources)
 }
 
 func (c UserController) GetResourceById(ctx *gin.Context) {
-    userId := ctx.Param("id")
-    ctx.JSON(http.StatusOK, gin.H{
-        "UserId": userId,
-    })
+    resourceId := ctx.Param("id")
+
+    resource, err := c.UserDAO.GetResourceById(resourceId)
+    if err != nil {
+        ctx.JSON(http.StatusNotFound, err)
+    }
+
+    ctx.JSON(http.StatusOK, resource)
 }
 
 func (c UserController) RegisterResource(controller *Controller) {

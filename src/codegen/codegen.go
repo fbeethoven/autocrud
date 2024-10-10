@@ -10,6 +10,7 @@ import (
 	"text/template"
 
 	"autocrud/src/config"
+	"autocrud/src/database"
 )
 
 type MainData struct {
@@ -171,12 +172,22 @@ func generateModelData(table config.TableSchema) ModelsData {
 }
 
 type DAOData struct {
-	Version     string
-	ProjectName string
-	Resource    string
+	ProjectName  string
+	Table        config.TableSchema
+	DatabasePath string
 }
 
-func GenerateDAO(destPath, projName string, table config.TableSchema) error {
+type DAOTmplData struct {
+	Version           string
+	ProjectName       string
+	Resource          string
+	Fields            []string
+	DatabasePath      string
+	QueryResource     string
+	QueryResourceById string
+}
+
+func GenerateDAO(destPath string, daoData DAOData) error {
 	file := getTemplateDir() + "/resourceDAO.tmpl"
 
 	t, err := template.New("resourceDAO.tmpl").ParseFiles(file)
@@ -190,17 +201,34 @@ func GenerateDAO(destPath, projName string, table config.TableSchema) error {
 	}
 	defer internalGenerateBuffer.Close()
 
-	daoData := DAOData{
-		Version:     config.Version,
-		ProjectName: projName,
-		Resource:    toTitle(table.Name),
-	}
-
-	if err := t.Execute(f, daoData); err != nil {
+	err = t.Execute(f, generateDAOTmplData(daoData))
+	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func generateDAOTmplData(daoData DAOData) DAOTmplData {
+	return DAOTmplData{
+		Version:           config.Version,
+		ProjectName:       daoData.ProjectName,
+		Resource:          toTitle(daoData.Table.Name),
+		Fields:            getTableFields(daoData.Table),
+		DatabasePath:      daoData.DatabasePath,
+		QueryResource:     database.GetResourceQuery(daoData.Table),
+		QueryResourceById: database.GetResourceByIdQuery(daoData.Table),
+	}
+}
+
+func getTableFields(table config.TableSchema) []string {
+	fields := make([]string, 0, len(table.Fields))
+
+	for _, field := range table.Fields {
+		fields = append(fields, toTitle(field.Name))
+	}
+
+	return fields
 }
 
 func GenerateControllerRouter(destPath, projName string) error {

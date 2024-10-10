@@ -37,6 +37,10 @@ func (b BackendGeneratorImpl) Generate() error {
 		},
 		config.Command{
 			Cmd:  "go",
+			Args: []string{"get", "github.com/mattn/go-sqlite3"},
+		},
+		config.Command{
+			Cmd:  "go",
 			Args: []string{"get", "github.com/gin-gonic/gin"},
 		},
 		config.Command{
@@ -71,7 +75,12 @@ func (b BackendGeneratorImpl) Generate() error {
 	daoDir := b.Directories.Backend + "/src/dao/"
 	for _, table := range b.Config.Schema.Tables {
 		destination := daoDir + table.Name + "DAO.go"
-		err = codegen.GenerateDAO(destination, projectName, table)
+		daoData := codegen.DAOData{
+			ProjectName:  projectName,
+			Table:        table,
+			DatabasePath: b.Directories.DatabasePath,
+		}
+		err = codegen.GenerateDAO(destination, daoData)
 		if err != nil {
 			return fmt.Errorf("Error writing to file: %v", err)
 		}
