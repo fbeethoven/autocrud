@@ -3,7 +3,9 @@ package config
 import (
 	"errors"
 	"fmt"
+	"log"
 	"os"
+	"os/exec"
 
 	"gopkg.in/yaml.v2"
 )
@@ -13,6 +15,8 @@ const (
 	FieldString    string = "string"
 	FieldTimestamp string = "timestamp"
 )
+
+const Version string = "v0.1.0"
 
 var validFields = map[string]int{
 	FieldInt:       1,
@@ -46,6 +50,31 @@ const (
 	NoPrimaryKeyError string = "no primary key in table"
 )
 
+func MakeDir(projectPath string) error {
+	_, err := os.Stat(projectPath)
+	if !os.IsNotExist(err) {
+		return fmt.Errorf("could not create directory %s", projectPath)
+	}
+
+	err = os.Mkdir(projectPath, 0755)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func MakeRelativeDir(parentDir, dirPath string) error {
+	directoryPath := fmt.Sprintf("./%s/%s", parentDir, dirPath)
+
+	err := MakeDir(directoryPath)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func Parse(configPath string) (Config, error) {
 	file, err := os.Open(configPath)
 	if err != nil {
@@ -60,7 +89,7 @@ func Parse(configPath string) (Config, error) {
 		return Config{}, err
 	}
 
-	if config.Version != "0.1.0" {
+	if config.Version != Version {
 		return Config{}, errors.New("unknown version")
 	}
 
@@ -87,5 +116,61 @@ func validateSchema(schema Schema) error {
 			return fmt.Errorf("%s: %s", NoPrimaryKeyError, table.Name)
 		}
 	}
+	return nil
+}
+
+func RunCmdInDir(dirPath string, cmd string, args ...string) error {
+	currDir, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	err = os.Chdir(dirPath)
+	if err != nil {
+		return err
+	}
+
+	_, err = exec.Command(cmd, args...).Output()
+	if err != nil {
+		return err
+	}
+
+	err = os.Chdir(currDir)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type Command struct {
+	Cmd  string
+	Args []string
+}
+
+func MultiRunCmdInDir(dirPath string, cmds ...Command) error {
+	currDir, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	err = os.Chdir(dirPath)
+	if err != nil {
+		return err
+	}
+
+	for _, cmd := range cmds {
+		log.Printf("running command: %v", cmd)
+		_, err = exec.Command(cmd.Cmd, cmd.Args...).Output()
+		if err != nil {
+			return err
+		}
+	}
+
+	err = os.Chdir(currDir)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

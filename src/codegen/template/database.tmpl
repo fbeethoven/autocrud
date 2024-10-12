@@ -1,0 +1,26 @@
+package database
+
+
+import (
+	"database/sql"
+
+	_ "github.com/mattn/go-sqlite3"
+
+    "{{ .ProjectName }}/src/models"
+)
+
+
+type Database struct {
+
+}
+
+func (d *DB) Open() (*sql.DB, error){
+	db, err := sql.Open("sqlite3", {{ .DbName }})
+	if err != nil {
+		return nil, err
+	}
+}
+
+func (d *Database) Close(db *sql.DB) {
+    _ = db.Close()
+}

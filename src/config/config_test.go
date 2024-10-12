@@ -1,22 +1,20 @@
-package tests
+package config
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"autocrud/src/config"
 )
 
 func TestConfig(t *testing.T) {
-	expected := config.Config{
+	expected := Config{
 		Name:    "TestAPI",
-		Version: "0.1.0",
-		Schema: config.Schema{
-			Tables: []config.TableSchema{
+		Version: "v0.1.0",
+		Schema: Schema{
+			Tables: []TableSchema{
 				{
 					Name: "user",
-					Fields: []config.FieldSchema{
+					Fields: []FieldSchema{
 						{
 							Name:         "user_id",
 							Type:         "int",
@@ -38,7 +36,7 @@ func TestConfig(t *testing.T) {
 				},
 				{
 					Name: "note",
-					Fields: []config.FieldSchema{
+					Fields: []FieldSchema{
 						{
 							Name:         "note_id",
 							Type:         "int",
@@ -66,7 +64,7 @@ func TestConfig(t *testing.T) {
 		},
 	}
 
-	config, err := config.Parse("data/basic_config.yaml")
+	config, err := Parse("testdata/basic_config.yaml")
 	if err != nil {
 		assert.NoError(t, err)
 	}
@@ -75,19 +73,28 @@ func TestConfig(t *testing.T) {
 }
 
 func TestConfigValidation(t *testing.T) {
-	_, err := config.Parse("data/unknown_field.yaml")
-	t.Log(err)
-	if err != nil {
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), config.UnknownFieldError)
+	testCases := []struct {
+		Name         string
+		ConfigPath   string
+		ErrorMessage string
+	}{
+		{
+			Name:         "TestConfigUnknownField",
+			ConfigPath:   "testdata/unknown_field.yaml",
+			ErrorMessage: UnknownFieldError,
+		},
+		{
+			Name:         "TestConfigNoPrimaryKeyError",
+			ConfigPath:   "testdata/no_primary_key.yaml",
+			ErrorMessage: NoPrimaryKeyError,
+		},
 	}
-}
 
-func TestConfigNoPrimaryKey(t *testing.T) {
-	_, err := config.Parse("data/no_primary_key.yaml")
-	t.Log(err)
-	if err != nil {
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), config.NoPrimaryKeyError)
+	for _, testCase := range testCases {
+		t.Run(testCase.Name, func(t *testing.T) {
+			_, err := Parse(testCase.ConfigPath)
+			assert.Error(t, err)
+			assert.Contains(t, err.Error(), testCase.ErrorMessage)
+		})
 	}
 }
