@@ -182,15 +182,21 @@ type DAOTmplData struct {
 	ProjectName       string
 	Resource          string
 	Fields            []string
+	TableName         string
+	TableColumns      []string
 	DatabasePath      string
 	QueryResource     string
 	QueryResourceById string
+	TableIdField      string
 }
 
 func GenerateDAO(destPath string, daoData DAOData) error {
 	file := getTemplateDir() + "/resourceDAO.tmpl"
 
-	t, err := template.New("resourceDAO.tmpl").ParseFiles(file)
+	t, err := template.New("resourceDAO.tmpl").Funcs(
+		template.FuncMap{
+			"sub": func(a, b int) int { return a - b },
+		}).ParseFiles(file)
 	if err != nil {
 		return err
 	}
@@ -210,14 +216,26 @@ func GenerateDAO(destPath string, daoData DAOData) error {
 }
 
 func generateDAOTmplData(daoData DAOData) DAOTmplData {
+	columns := make([]string, 0, len(daoData.Table.Fields))
+	for _, field := range daoData.Table.Fields {
+		if field.IsPrimaryKey {
+			continue
+		}
+
+		columns = append(columns, field.Name)
+	}
+
 	return DAOTmplData{
 		Version:           config.Version,
 		ProjectName:       daoData.ProjectName,
 		Resource:          toTitle(daoData.Table.Name),
 		Fields:            getTableFields(daoData.Table),
+		TableName:         daoData.Table.Name,
+		TableColumns:      columns,
 		DatabasePath:      daoData.DatabasePath,
 		QueryResource:     database.GetResourceQuery(daoData.Table),
 		QueryResourceById: database.GetResourceByIdQuery(daoData.Table),
+		TableIdField:      getTableIdField(daoData.Table),
 	}
 }
 
@@ -229,6 +247,18 @@ func getTableFields(table config.TableSchema) []string {
 	}
 
 	return fields
+}
+
+func getTableIdField(table config.TableSchema) string {
+	idField := ""
+
+	for _, field := range table.Fields {
+		if field.IsPrimaryKey {
+			idField = field.Name
+		}
+	}
+
+	return idField
 }
 
 func GenerateControllerRouter(destPath, projName string) error {
@@ -262,10 +292,11 @@ func GenerateControllerRouter(destPath, projName string) error {
 }
 
 type ControllerData struct {
-	Version     string
-	ProjectName string
-	Resource    string
-	ResourceUrl string
+	Version      string
+	ProjectName  string
+	Resource     string
+	ResourceUrl  string
+	TableIdField string
 }
 
 func GenerateController(destPath, projName string, table config.TableSchema) error {
@@ -283,10 +314,11 @@ func GenerateController(destPath, projName string, table config.TableSchema) err
 	defer internalGenerateBuffer.Close()
 
 	err = t.Execute(f, ControllerData{
-		Version:     config.Version,
-		ProjectName: projName,
-		Resource:    toTitle(table.Name),
-		ResourceUrl: table.Name,
+		Version:      config.Version,
+		ProjectName:  projName,
+		Resource:     toTitle(table.Name),
+		ResourceUrl:  table.Name,
+		TableIdField: toTitle(getTableIdField(table)),
 	})
 	if err != nil {
 		return err

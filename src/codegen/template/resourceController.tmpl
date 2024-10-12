@@ -4,10 +4,13 @@ package controller
 
 import (
     "net/http"
+    "log"
+    "strconv"
 
     "github.com/gin-gonic/gin"
 
     "{{ .ProjectName }}/src/dao"
+    "{{ .ProjectName }}/src/models"
 )
 
 type {{ .Resource }}Controller struct {
@@ -23,10 +26,34 @@ func New{{ .Resource }}Controller() *{{ .Resource }}Controller {
 func (c {{ .Resource }}Controller) GetResource(ctx *gin.Context) {
     resources, err := c.{{ .Resource }}DAO.GetResource()
     if err != nil {
-        ctx.JSON(http.StatusInternalServerError, err)
+        log.Printf("error %v\n", err)
+        ctx.JSON(http.StatusInternalServerError, nil)
+        return
     }
 
     ctx.JSON(http.StatusOK, resources)
+}
+
+func (c {{ .Resource }}Controller) CreateResource(ctx *gin.Context) {
+    in := models.{{ .Resource }} {}
+
+    err := ctx.BindJSON(&in)
+    if err != nil {
+        log.Printf("error %v\n", err)
+        ctx.JSON(http.StatusInternalServerError, nil)
+        return
+    }
+
+    log.Printf("received %v\n", in)
+
+    resourceId, err := c.{{ .Resource }}DAO.CreateResource(&in)
+    if err != nil {
+        log.Printf("error %v\n", err)
+        ctx.JSON(http.StatusInternalServerError, nil)
+        return
+    }
+
+    ctx.JSON(http.StatusOK, resourceId)
 }
 
 func (c {{ .Resource }}Controller) GetResourceById(ctx *gin.Context) {
@@ -34,15 +61,68 @@ func (c {{ .Resource }}Controller) GetResourceById(ctx *gin.Context) {
 
     resource, err := c.{{ .Resource }}DAO.GetResourceById(resourceId)
     if err != nil {
-        ctx.JSON(http.StatusNotFound, err)
+        log.Printf("error %v\n", err)
+        ctx.JSON(http.StatusNotFound, nil)
+        return
     }
 
     ctx.JSON(http.StatusOK, resource)
+}
+
+func (c {{ .Resource }}Controller) UpdateResource(ctx *gin.Context) {
+    in := models.{{ .Resource }} {}
+
+    err := ctx.BindJSON(&in)
+    if err != nil {
+        log.Printf("error %v\n", err)
+        ctx.JSON(http.StatusInternalServerError, nil)
+        return
+    }
+
+    log.Printf("received %v\n", in)
+
+    paramId, err := strconv.Atoi(ctx.Param("id"))
+    if err != nil {
+        log.Printf("error %v\n", err)
+        ctx.JSON(http.StatusBadRequest, nil)
+        return
+    }
+
+    if in.{{ .TableIdField }} != paramId {
+        log.Printf("error incompatible id: %d vs %d.\n", in.{{ .TableIdField }}, paramId)
+        ctx.JSON(http.StatusForbidden, nil)
+        return
+    }
+
+    err = c.{{ .Resource }}DAO.UpdateResource(&in)
+    if err != nil {
+        log.Printf("error %v\n", err)
+        ctx.JSON(http.StatusInternalServerError, nil)
+        return
+    }
+
+    ctx.JSON(http.StatusOK, nil)
+}
+
+func (c {{ .Resource }}Controller) DeleteResourceById(ctx *gin.Context) {
+    paramId := ctx.Param("id")
+
+    err := c.{{ .Resource }}DAO.DeleteResourceById(paramId)
+    if err != nil {
+        log.Printf("error %v\n", err)
+        ctx.JSON(http.StatusInternalServerError, nil)
+        return
+    }
+
+    ctx.JSON(http.StatusOK, nil)
 }
 
 func (c {{ .Resource }}Controller) RegisterResource(controller *Controller) {
     controller.Resources = append(controller.Resources, c)
 
     controller.Router.GET("/{{ .ResourceUrl }}", c.GetResource)
+    controller.Router.POST("/{{ .ResourceUrl }}", c.CreateResource)
     controller.Router.GET("/{{ .ResourceUrl }}/:id", c.GetResourceById)
+    controller.Router.PATCH("/{{ .ResourceUrl }}/:id", c.UpdateResource)
+    controller.Router.DELETE("/{{ .ResourceUrl }}/:id", c.DeleteResourceById)
 }

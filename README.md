@@ -10,16 +10,17 @@ Automatically generate REST APIs
  - [X] write test for codegen.
  - [X] workout absolute path for codegen templates.
  - [ ] rest api to create and read a single resource:
-   - [ ] create resource from a single table.
-   - [ ] read resource from a single table.
- - [ ] rest api to update and delete a single resource:
-   - [ ] update resource from a single table.
-   - [ ] delete resource from a single table.
- - [ ] parse yaml schema for relational tables.
+   - [X] create resource from a single table.
+   - [X] read resource from a single table.
+ - [X] rest api to update and delete a single resource:
+   - [X] update resource from a single table.
+   - [X] delete resource from a single table.
  - [ ] getAll frontend: list view with option to add or delete entry.
  - [ ] getById frontend with edit and delete option.
+ - [ ] add proper loggin
  
 # TODO future
+ - [ ] parse yaml schema for relational tables.
  - [ ] search items in getAll view
  - [ ] get names for backend frontend and database directories from config.
  - [ ] make generate DB optional

@@ -46,6 +46,67 @@ func (r {{ .Resource }}DAO) GetResource() ([]models.{{ .Resource }}, error) {
     return resources, nil
 }
 
+func (r {{ .Resource }}DAO) CreateResource(in *models.{{ .Resource }}) (int, error) {
+    db, err := sql.Open("sqlite3", "{{ .DatabasePath }}")
+    if err != nil {
+        return 0, err
+    }
+    defer db.Close()
+
+    query := `INSERT INTO {{ .TableName }} ({{ range $i, $v := .TableColumns }}{{ $v }}{{ if lt $i ( sub ( len $.TableColumns) 1) }},{{end}}{{ end }})
+    VALUES ({{ range $i, $v := .TableColumns }}?{{ if lt $i ( sub ( len $.TableColumns) 1) }},{{end}}{{end}});`
+    result, err := db.Exec(
+        query,
+{{ range $i, $v := .Fields }}
+{{ if eq $i 0 }}{{ else }}
+        in.{{ . }},
+{{ end }}
+{{ end }}
+    )
+    if err != nil {
+        return 0, err
+    }
+
+    newId, err := result.LastInsertId()
+    if err != nil {
+        return 0, err
+    }
+
+    return int(newId), nil
+}
+
+func (r {{ .Resource }}DAO) UpdateResource(in *models.{{ .Resource }}) error {
+    db, err := sql.Open("sqlite3", "{{ .DatabasePath }}")
+    if err != nil {
+        return err
+    }
+    defer db.Close()
+
+    query := `UPDATE {{ .TableName }} SET
+{{ range $i, $v := .TableColumns }}
+    {{ $v }}=?{{ if lt $i ( sub ( len $.TableColumns) 1) }},{{end}}
+{{end}}
+    WHERE {{ .TableIdField }} = ?
+    ;`
+
+    stmt, err := db.Prepare(query)
+    if err != nil {
+        return err
+    }
+    defer stmt.Close()
+
+    _, err = stmt.Exec(
+{{ range $i, $v := .Fields }}{{ if eq $i 0 }}{{ else }}
+        in.{{ . }},
+{{ end }}{{ end }}in.{{ index .Fields 0 }},
+    )
+    if err != nil {
+        return err
+    }
+
+    return nil
+}
+
 func (r {{ .Resource }}DAO) GetResourceById(resourceId string) (*models.{{ .Resource }}, error) {
     db, err := sql.Open("sqlite3", "{{ .DatabasePath }}")
     if err != nil {
@@ -67,4 +128,24 @@ func (r {{ .Resource }}DAO) GetResourceById(resourceId string) (*models.{{ .Reso
     }
 
     return &resource, nil
+}
+
+func (r {{ .Resource }}DAO) DeleteResourceById(resourceId string) error {
+    db, err := sql.Open("sqlite3", "{{ .DatabasePath }}")
+    if err != nil {
+        return err
+    }
+    defer db.Close()
+
+    stmt, err := db.Prepare("DELETE FROM {{ .TableName }} WHERE {{ .TableIdField }} = ?;")
+    if err != nil {
+        return err
+    }
+
+    _, err = stmt.Exec(resourceId)
+    if err != nil {
+        return err
+    }
+
+    return nil
 }

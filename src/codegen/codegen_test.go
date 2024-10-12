@@ -205,6 +205,69 @@ func (r UserDAO) GetResource() ([]models.User, error) {
     return resources, nil
 }
 
+func (r UserDAO) CreateResource(in *models.User) (int, error) {
+    db, err := sql.Open("sqlite3", "./test.db")
+    if err != nil {
+        return 0, err
+    }
+    defer db.Close()
+
+    query := ` + "`" + `INSERT INTO user (created_at)
+    VALUES (?);` + "`" + `
+    result, err := db.Exec(
+        query,
+
+
+
+
+        in.Created_at,
+
+
+    )
+    if err != nil {
+        return 0, err
+    }
+
+    newId, err := result.LastInsertId()
+    if err != nil {
+        return 0, err
+    }
+
+    return int(newId), nil
+}
+
+func (r UserDAO) UpdateResource(in *models.User) error {
+    db, err := sql.Open("sqlite3", "./test.db")
+    if err != nil {
+        return err
+    }
+    defer db.Close()
+
+    query := ` + "`" + `UPDATE user SET
+
+    created_at=?
+
+    WHERE user_id = ?
+    ;` + "`" + `
+
+    stmt, err := db.Prepare(query)
+    if err != nil {
+        return err
+    }
+    defer stmt.Close()
+
+    _, err = stmt.Exec(
+
+        in.Created_at,
+in.User_id,
+    )
+    if err != nil {
+        return err
+    }
+
+    return nil
+}
+
 func (r UserDAO) GetResourceById(resourceId string) (*models.User, error) {
     db, err := sql.Open("sqlite3", "./test.db")
     if err != nil {
@@ -212,7 +275,7 @@ func (r UserDAO) GetResourceById(resourceId string) (*models.User, error) {
     }
     defer db.Close()
 
-    query := ""
+    query := "SELECT * FROM user WHERE user_id=?;"
 
     resource := models.User{}
 
@@ -229,6 +292,26 @@ func (r UserDAO) GetResourceById(resourceId string) (*models.User, error) {
 
     return &resource, nil
 }
+
+func (r UserDAO) DeleteResourceById(resourceId string) error {
+    db, err := sql.Open("sqlite3", "./test.db")
+    if err != nil {
+        return err
+    }
+    defer db.Close()
+
+    stmt, err := db.Prepare("DELETE FROM user WHERE user_id = ?;")
+    if err != nil {
+        return err
+    }
+
+    _, err = stmt.Exec(resourceId)
+    if err != nil {
+        return err
+    }
+
+    return nil
+}
 `
 
 	daoData := DAOData{
@@ -237,8 +320,9 @@ func (r UserDAO) GetResourceById(resourceId string) (*models.User, error) {
 			Name: "user",
 			Fields: []config.FieldSchema{
 				{
-					Name: "user_id",
-					Type: "int",
+					Name:         "user_id",
+					Type:         "int",
+					IsPrimaryKey: true,
 				},
 				{
 					Name: "created_at",
@@ -266,10 +350,13 @@ package controller
 
 import (
     "net/http"
+    "log"
+    "strconv"
 
     "github.com/gin-gonic/gin"
 
     "test/src/dao"
+    "test/src/models"
 )
 
 type UserController struct {
@@ -285,10 +372,34 @@ func NewUserController() *UserController {
 func (c UserController) GetResource(ctx *gin.Context) {
     resources, err := c.UserDAO.GetResource()
     if err != nil {
-        ctx.JSON(http.StatusInternalServerError, err)
+        log.Printf("error %v\n", err)
+        ctx.JSON(http.StatusInternalServerError, nil)
+        return
     }
 
     ctx.JSON(http.StatusOK, resources)
+}
+
+func (c UserController) CreateResource(ctx *gin.Context) {
+    in := models.User {}
+
+    err := ctx.BindJSON(&in)
+    if err != nil {
+        log.Printf("error %v\n", err)
+        ctx.JSON(http.StatusInternalServerError, nil)
+        return
+    }
+
+    log.Printf("received %v\n", in)
+
+    resourceId, err := c.UserDAO.CreateResource(&in)
+    if err != nil {
+        log.Printf("error %v\n", err)
+        ctx.JSON(http.StatusInternalServerError, nil)
+        return
+    }
+
+    ctx.JSON(http.StatusOK, resourceId)
 }
 
 func (c UserController) GetResourceById(ctx *gin.Context) {
@@ -296,17 +407,70 @@ func (c UserController) GetResourceById(ctx *gin.Context) {
 
     resource, err := c.UserDAO.GetResourceById(resourceId)
     if err != nil {
-        ctx.JSON(http.StatusNotFound, err)
+        log.Printf("error %v\n", err)
+        ctx.JSON(http.StatusNotFound, nil)
+        return
     }
 
     ctx.JSON(http.StatusOK, resource)
+}
+
+func (c UserController) UpdateResource(ctx *gin.Context) {
+    in := models.User {}
+
+    err := ctx.BindJSON(&in)
+    if err != nil {
+        log.Printf("error %v\n", err)
+        ctx.JSON(http.StatusInternalServerError, nil)
+        return
+    }
+
+    log.Printf("received %v\n", in)
+
+    paramId, err := strconv.Atoi(ctx.Param("id"))
+    if err != nil {
+        log.Printf("error %v\n", err)
+        ctx.JSON(http.StatusBadRequest, nil)
+        return
+    }
+
+    if in.User_id != paramId {
+        log.Printf("error incompatible id: %d vs %d.\n", in.User_id, paramId)
+        ctx.JSON(http.StatusForbidden, nil)
+        return
+    }
+
+    err = c.UserDAO.UpdateResource(&in)
+    if err != nil {
+        log.Printf("error %v\n", err)
+        ctx.JSON(http.StatusInternalServerError, nil)
+        return
+    }
+
+    ctx.JSON(http.StatusOK, nil)
+}
+
+func (c UserController) DeleteResourceById(ctx *gin.Context) {
+    paramId := ctx.Param("id")
+
+    err := c.UserDAO.DeleteResourceById(paramId)
+    if err != nil {
+        log.Printf("error %v\n", err)
+        ctx.JSON(http.StatusInternalServerError, nil)
+        return
+    }
+
+    ctx.JSON(http.StatusOK, nil)
 }
 
 func (c UserController) RegisterResource(controller *Controller) {
     controller.Resources = append(controller.Resources, c)
 
     controller.Router.GET("/user", c.GetResource)
+    controller.Router.POST("/user", c.CreateResource)
     controller.Router.GET("/user/:id", c.GetResourceById)
+    controller.Router.PATCH("/user/:id", c.UpdateResource)
+    controller.Router.DELETE("/user/:id", c.DeleteResourceById)
 }
 `
 
@@ -314,8 +478,9 @@ func (c UserController) RegisterResource(controller *Controller) {
 		Name: "user",
 		Fields: []config.FieldSchema{
 			{
-				Name: "user_id",
-				Type: "int",
+				Name:         "user_id",
+				Type:         "int",
+				IsPrimaryKey: true,
 			},
 			{
 				Name: "created_at",
