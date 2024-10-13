@@ -6,6 +6,7 @@ import (
 	"autocrud/src/backend"
 	"autocrud/src/config"
 	"autocrud/src/database"
+	"autocrud/src/frontend"
 )
 
 func main() {
@@ -23,13 +24,8 @@ func main() {
 		return
 	}
 
-	generator := backend.New(conf, directories)
-
-	err = generator.Generate()
-	if err != nil {
-		log.Printf("%v", err)
-		return
-	}
+	backend.New(conf, directories).Generate()
+	frontend.New(conf, directories).Generate()
 
 	log.Print("success")
 }

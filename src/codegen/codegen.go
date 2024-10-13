@@ -1,6 +1,7 @@
 package codegen
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -12,6 +13,10 @@ import (
 	"autocrud/src/config"
 	"autocrud/src/database"
 )
+
+type Generator interface {
+	Generate()
+}
 
 type MainData struct {
 	Version     string
@@ -48,8 +53,6 @@ func (g *GenerateBufferImpl) Close() {
 
 	_ = g.f.Close()
 	g.f = nil
-
-	return
 }
 
 func BeginTest(g GenerateBuffer) {
@@ -108,7 +111,10 @@ func getTemplateDir() string {
 func GenerateModel(destPath string, table config.TableSchema) error {
 	file := getTemplateDir() + "/resource.tmpl"
 
-	t, err := template.New("resource.tmpl").ParseFiles(file)
+	t, err := template.New("resource.tmpl").Funcs(
+		template.FuncMap{
+			"toPascalCase": toPascalCase,
+		}).ParseFiles(file)
 	if err != nil {
 		return err
 	}
@@ -133,10 +139,34 @@ func toTitle(text string) string {
 	return strings.ToUpper(string(text[0])) + text[1:]
 }
 
+func toCamelCase(text string) string {
+	words := make([]string, 0)
+
+	for i, word := range strings.Split(text, "_") {
+		if i == 0 {
+			words = append(words, word)
+		} else {
+			words = append(words, toTitle(word))
+		}
+	}
+
+	return strings.Join(words, "")
+}
+
+func toPascalCase(text string) string {
+	words := make([]string, 0)
+
+	for _, word := range strings.Split(text, "_") {
+		words = append(words, toTitle(word))
+	}
+
+	return strings.Join(words, "")
+}
+
 func getMainData(conf config.Config, projName string) MainData {
 	controllers := make([]string, 0, len(conf.Schema.Tables))
 	for _, table := range conf.Schema.Tables {
-		controllers = append(controllers, toTitle(table.Name))
+		controllers = append(controllers, toPascalCase(table.Name))
 	}
 
 	return MainData{
@@ -158,7 +188,7 @@ func generateModelData(table config.TableSchema) ModelsData {
 		}
 
 		fields = append(fields, FieldData{
-			Name: toTitle(field.Name),
+			Name: field.Name,
 			Type: fieldType,
 		})
 	}
@@ -166,7 +196,7 @@ func generateModelData(table config.TableSchema) ModelsData {
 	return ModelsData{
 		Version:      config.Version,
 		ImportTime:   importTime,
-		ResourceName: toTitle(table.Name),
+		ResourceName: toPascalCase(table.Name),
 		Fields:       fields,
 	}
 }
@@ -228,7 +258,7 @@ func generateDAOTmplData(daoData DAOData) DAOTmplData {
 	return DAOTmplData{
 		Version:           config.Version,
 		ProjectName:       daoData.ProjectName,
-		Resource:          toTitle(daoData.Table.Name),
+		Resource:          toPascalCase(daoData.Table.Name),
 		Fields:            getTableFields(daoData.Table),
 		TableName:         daoData.Table.Name,
 		TableColumns:      columns,
@@ -243,7 +273,7 @@ func getTableFields(table config.TableSchema) []string {
 	fields := make([]string, 0, len(table.Fields))
 
 	for _, field := range table.Fields {
-		fields = append(fields, toTitle(field.Name))
+		fields = append(fields, toPascalCase(field.Name))
 	}
 
 	return fields
@@ -316,10 +346,166 @@ func GenerateController(destPath, projName string, table config.TableSchema) err
 	err = t.Execute(f, ControllerData{
 		Version:      config.Version,
 		ProjectName:  projName,
-		Resource:     toTitle(table.Name),
+		Resource:     toPascalCase(table.Name),
 		ResourceUrl:  table.Name,
-		TableIdField: toTitle(getTableIdField(table)),
+		TableIdField: toPascalCase(getTableIdField(table)),
 	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type GeneratorFunc func()
+
+func GeneratorFactory(templatePath, destPath string) GeneratorFunc {
+	return func() {
+		file := fmt.Sprintf("%s/%s", getTemplateDir(), templatePath)
+
+		t, err := template.New(templatePath).ParseFiles(file)
+		if err != nil {
+			log.Printf("could not generate %s: %v", destPath, err)
+			return
+		}
+
+		f, err := internalGenerateBuffer.CreateBuffer(destPath)
+		if err != nil {
+			log.Printf("could not generate %s: %v", destPath, err)
+			return
+		}
+		defer internalGenerateBuffer.Close()
+
+		err = t.Execute(f, nil)
+		if err != nil {
+			log.Printf("could not generate %s: %v", destPath, err)
+			return
+		}
+	}
+}
+
+func GenerateResources(destDir string, tables []config.TableSchema) error {
+	t, err := template.New("resources.ts.tmpl").
+		Funcs(template.FuncMap{
+			"toPascalCase": toPascalCase,
+		}).ParseFiles(getTemplateDir() + "/resources.ts.tmpl")
+	if err != nil {
+		return err
+	}
+
+	f, err := internalGenerateBuffer.CreateBuffer(destDir + "/resources.ts")
+	if err != nil {
+		return err
+	}
+	defer internalGenerateBuffer.Close()
+
+	err = t.Execute(f, tables)
+	if err != nil {
+		log.Printf("[CODEGEN] error with resources")
+		return err
+	}
+
+	for _, table := range tables {
+		log.Printf("[CODEGEN] generating table %v", table)
+
+		t, err = template.New("types.ts.tmpl").
+			Funcs(template.FuncMap{
+				"toPascalCase": toPascalCase,
+				"toCamelCase":  toCamelCase,
+				"getType": func(inType string) string {
+					return config.TypeMap[inType]
+				},
+			}).ParseFiles(getTemplateDir() + "/types.ts.tmpl")
+		if err != nil {
+			return err
+		}
+
+		f, err = internalGenerateBuffer.CreateBuffer(
+			fmt.Sprintf(
+				"%s/%s.ts",
+				destDir,
+				toPascalCase(table.Name),
+			))
+		if err != nil {
+			return err
+		}
+		defer internalGenerateBuffer.Close()
+
+		err = t.Execute(f, table)
+		if err != nil {
+			log.Printf("[CODEGEN] error with table %v", table)
+			return err
+		}
+	}
+
+	return nil
+}
+
+func GenerateResourceTables(destDir string, conf config.Config) error {
+	tables := conf.Schema.Tables
+	file := getTemplateDir() + "/columns.tsx.tmpl"
+
+	t, err := template.New("columns.tsx.tmpl").
+		Funcs(template.FuncMap{
+			"toPascalCase": toPascalCase,
+			"toCamelCase":  toCamelCase,
+		}).ParseFiles(file)
+	if err != nil {
+		return err
+	}
+
+	f, err := internalGenerateBuffer.CreateBuffer(destDir + "/columns.tsx")
+	if err != nil {
+		return err
+	}
+	defer internalGenerateBuffer.Close()
+
+	err = t.Execute(f, tables)
+	if err != nil {
+		return err
+	}
+
+	file = getTemplateDir() + "/Navbar.tsx.tmpl"
+
+	t, err = template.New("Navbar.tsx.tmpl").
+		Funcs(template.FuncMap{
+			"toPascalCase": toPascalCase,
+		}).ParseFiles(file)
+	if err != nil {
+		return err
+	}
+
+	f, err = internalGenerateBuffer.CreateBuffer(destDir + "/Navbar.tsx")
+	if err != nil {
+		return err
+	}
+	defer internalGenerateBuffer.Close()
+
+	err = t.Execute(f, map[string]any{
+		"ProjectName": conf.Name,
+		"Tables":      tables,
+	})
+	if err != nil {
+		return err
+	}
+
+	Tablefile := getTemplateDir() + "/page.tsx.tmpl"
+	t, err = template.New("page.tsx.tmpl").
+		Funcs(template.FuncMap{
+			"toPascalCase": toPascalCase,
+			"toCamelCase":  toCamelCase,
+		}).ParseFiles(Tablefile)
+	if err != nil {
+		return err
+	}
+
+	f, err = internalGenerateBuffer.CreateBuffer(destDir + "/page.tsx")
+	if err != nil {
+		return err
+	}
+	defer internalGenerateBuffer.Close()
+
+	err = t.Execute(f, tables)
 	if err != nil {
 		return err
 	}

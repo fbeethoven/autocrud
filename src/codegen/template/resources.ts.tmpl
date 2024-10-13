@@ -1,0 +1,11 @@
+export const resources: string[] = [
+{{- range . }}
+    "{{ .Name }}",
+{{- end }}
+]
+
+export type Resources = (
+{{- range . }}
+    | Array<{{ toPascalCase .Name }}>
+{{- end }}
+)

@@ -1,0 +1,46 @@
+import { useState, useEffect } from "react"
+import {
+  {{- range . }}
+  {{ toPascalCase .Name }}, {{ toCamelCase .Name }}Columns,
+  {{- end }}
+} from "@/components/columns"
+import { DataTable } from "./data-table"
+import { Resources } from "@/types/resources"
+
+
+type PageProps = {
+  resource: string,
+}
+
+export function DemoPage({ resource }: PageProps) {
+  const [resources, setResources] = useState<Resources>([])
+
+  useEffect(() => {
+    const getData = async () => {
+      console.log("req", `http://localhost:8080/${resource}`)
+      const dataResponse = await fetch(`http://localhost:8080/${resource}`)
+      const data = await dataResponse.json()
+      console.log(data)
+      setResources(data)
+    }
+
+    getData()
+
+  }, [resource])
+
+  const getColumns = (resource: string): ColumnDef<TData, TValue>[] => {
+    switch (resource) {
+      {{- range . }}
+       case "{{ .Name }}": return {{ toCamelCase .Name }}Columns
+      {{- end }}
+      default:
+        return []
+    }
+  }
+
+  return (
+    <div className="container mx-auto py-10">
+      <DataTable columns={ getColumns(resource) } data={ resources } />
+    </div>
+  )
+}

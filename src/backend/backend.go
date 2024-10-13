@@ -1,16 +1,12 @@
 package backend
 
 import (
-	"fmt"
+	"log"
 
 	"autocrud/src/codegen"
 	"autocrud/src/config"
 	"autocrud/src/database"
 )
-
-type BackendGenerator interface {
-	Generate() error
-}
 
 type BackendGeneratorImpl struct {
 	Config      config.Config
@@ -27,7 +23,7 @@ func New(
 	}
 }
 
-func (b BackendGeneratorImpl) Generate() error {
+func (b BackendGeneratorImpl) Generate() {
 	projectName := "backend"
 	err := config.MultiRunCmdInDir(
 		b.Directories.Backend,
@@ -48,6 +44,10 @@ func (b BackendGeneratorImpl) Generate() error {
 			Args: []string{"get", "github.com/gin-contrib/cors"},
 		},
 	)
+	if err != nil {
+		log.Printf("Error initiating backend module: %v", err)
+		return
+	}
 
 	config.MakeRelativeDir(b.Directories.Backend, "src")
 
@@ -55,7 +55,8 @@ func (b BackendGeneratorImpl) Generate() error {
 
 	err = codegen.GenerateMain(filePath, projectName, b.Config)
 	if err != nil {
-		return fmt.Errorf("Error writing to file: %v", err)
+		log.Printf("Error writing to file: %v", err)
+		return
 	}
 
 	config.MakeRelativeDir(b.Directories.Backend+"/src", "models")
@@ -66,7 +67,8 @@ func (b BackendGeneratorImpl) Generate() error {
 		destination := modelsDir + table.Name + ".go"
 		err = codegen.GenerateModel(destination, table)
 		if err != nil {
-			return fmt.Errorf("Error writing to file: %v", err)
+			log.Printf("Error writing to file: %v", err)
+			return
 		}
 	}
 
@@ -82,7 +84,8 @@ func (b BackendGeneratorImpl) Generate() error {
 		}
 		err = codegen.GenerateDAO(destination, daoData)
 		if err != nil {
-			return fmt.Errorf("Error writing to file: %v", err)
+			log.Printf("Error writing to file: %v", err)
+			return
 		}
 	}
 
@@ -93,15 +96,16 @@ func (b BackendGeneratorImpl) Generate() error {
 	destination := controllerDir + "controller.go"
 	err = codegen.GenerateControllerRouter(destination, projectName)
 	if err != nil {
-		return fmt.Errorf("Error writing to file: %v", err)
+		log.Printf("Error writing to file: %v", err)
+		return
 	}
 
 	for _, table := range b.Config.Schema.Tables {
 		destination := controllerDir + table.Name + "Controller.go"
 		err = codegen.GenerateController(destination, projectName, table)
 		if err != nil {
-			return fmt.Errorf("Error writing to file: %v", err)
+			log.Printf("Error writing to file: %v", err)
+			return
 		}
 	}
-	return nil
 }

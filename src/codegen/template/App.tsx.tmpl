@@ -1,0 +1,14 @@
+import { ThemeProvider } from "@/components/theme-provider"
+import { DemoPage } from "@/components/pageNote"
+import { Navbar } from "@/components/Navbar"
+
+
+function App() {
+  return (
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <Navbar/>
+    </ThemeProvider>
+  )
+}
+
+export default App
