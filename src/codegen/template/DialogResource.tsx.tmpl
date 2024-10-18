@@ -1,0 +1,97 @@
+import { FC, useRef, useState } from "react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
+import { Plus } from "lucide-react"
+
+type FieldsProps = {
+  setIsOpen: (bool)=>void
+}
+
+{{ range . }}
+const {{ toPascalCase .Name }}Fields = ({setIsOpen}: FieldsProps) => {
+  const formRef = useRef(null)
+
+  const handleForm = async (e) => {
+    e.preventDefault()
+    const payload = Object.fromEntries(new FormData(e.target))
+
+    const result = await fetch(
+      "http://127.0.0.1:8080/{{ .Name }}",
+      {
+        method: "POST",
+        body: JSON.stringify(payload)
+      }
+    )
+
+    if (formRef.current) {
+      formRef.current.reset()
+    }
+
+    setIsOpen(false)
+  }
+
+  return (
+    <form ref={formRef} className="space-y-8" onSubmit={ handleForm }>
+{{- range .Fields }}
+      <div className="grid w-full max-w-sm items-center gap-1.5">
+        <Label htmlFor="{{ .Name }}" >
+            {{ .Name }}
+        </Label>
+        <Input id="{{ .Name }}" name="{{ .Name }}" />
+      </div>
+{{- end }}
+      <div className="flex justify-end">
+        <Button variant="secondary" type="submit" >
+          Create New {{ toPascalCase .Name }}
+        </Button >
+      </div>
+    </form>
+  )
+}
+{{ end }}
+
+function getFields(resource: string, setIsOpen: (bool)=>void): FC {
+  switch(resource) {
+    {{- range . }}
+    case "{{ .Name }}": return <{{ toPascalCase .Name }}Fields setIsOpen={ setIsOpen }/>
+    {{- end}}
+  }
+}
+
+type DialogResourceProp = {
+  resource: string,
+  setResource: (string) => string,
+}
+
+export const DialogResource = ({resource, setResource}: DialogResourceProp) => {
+  const [isOpen, setIsOpen] = useState<bool>(false)
+
+  return (
+    <Dialog open={ isOpen } onOpenChange={ setIsOpen } >
+      <DialogTrigger asChild>
+        <Button variant="outline" >
+          <Plus />New { resource }
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add New { resource }</DialogTitle>
+          <DialogDescription>
+            Input data to create a new { resource }.
+          </DialogDescription>
+        </DialogHeader>
+        { getFields(resource, setIsOpen) }
+      </DialogContent>
+    </Dialog>
+  )
+}
