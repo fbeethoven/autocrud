@@ -41,6 +41,7 @@ type FieldSchema struct {
 	Name         string `yaml:"name"`
 	Type         string `yaml:"type"`
 	IsPrimaryKey bool   `yaml:"is_primary_key"`
+	HasDefault   bool   `yaml:"has_default"`
 }
 
 type TableSchema struct {

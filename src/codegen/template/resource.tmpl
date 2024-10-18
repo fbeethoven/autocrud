@@ -8,7 +8,15 @@ package models
 
 type {{ .ResourceName }} struct {
 {{- range .Fields }}
-    {{ toPascalCase .Name }} {{ .Type }} `json:"{{ .Name -}}"`
+    {{ toPascalCase .Name }} {{ .Type }} `json:"{{ .Name }}"`
+{{- end }}
+}
+
+type {{ .ResourceName }}DTO struct {
+{{- range .Fields }}
+{{- if .Exclude }}{{else}}
+    {{ toPascalCase .Name }} {{ .Type }} `json:"{{ .Name }}"`
+{{- end }}
 {{- end }}
 }
 
