@@ -35,7 +35,7 @@ func (c {{ .Resource }}Controller) GetResource(ctx *gin.Context) {
 }
 
 func (c {{ .Resource }}Controller) CreateResource(ctx *gin.Context) {
-    in := models.{{ .Resource }} {}
+    in := models.{{ .Resource }}DTO {}
 
     err := ctx.BindJSON(&in)
     if err != nil {

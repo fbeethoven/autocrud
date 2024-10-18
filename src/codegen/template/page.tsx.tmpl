@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import {
   {{- range . }}
-  {{ toPascalCase .Name }}, {{ toCamelCase .Name }}Columns,
+  {{ toPascalCase .Name }}, get{{ toPascalCase .Name }}Columns,
   {{- end }}
 } from "@/components/columns"
 import { DataTable } from "./data-table"
@@ -9,38 +9,57 @@ import { Resources, resourceName } from "@/types/resources"
 import { Navbar } from "@/components/Navbar"
 import { DialogResource } from "@/components/DialogResource"
 
+const getColumns = (
+  resource: string,
+  updateTable: ()=>void,
+): ColumnDef<TData, TValue>[] => {
+  switch (resource) {
+    {{- range . }}
+     case "{{ .Name }}": return get{{ toPascalCase .Name }}Columns(updateTable)
+    {{- end }}
+    default:
+      return []
+  }
+}
+
 export function AppPage() {
   const [resource, setResource] = useState<string>(resourceName[0])
+  const [needUpdate, setNeedUpdate] = useState<false>(false)
   const [resources, setResources] = useState<Resources>([])
+
+  const updateTable = () => {
+    setNeedUpdate(!needUpdate)
+  }
+
+  const handleRowClick = (item) => {
+    console.log(item)
+  }
 
   useEffect(() => {
     const getData = async () => {
-      console.log("req", `http://localhost:8080/${resource}`)
       const dataResponse = await fetch(`http://localhost:8080/${resource}`)
       const data = await dataResponse.json()
-      console.log(data)
       setResources(data)
     }
 
     getData()
 
-  }, [resource])
+  }, [resource, needUpdate])
 
-  const getColumns = (resource: string): ColumnDef<TData, TValue>[] => {
-    switch (resource) {
-      {{- range . }}
-       case "{{ .Name }}": return {{ toCamelCase .Name }}Columns
-      {{- end }}
-      default:
-        return []
-    }
-  }
 
   return (
     <div className="container mx-auto py-10 space-y-4" >
       <Navbar resource={ resource } setResource={ setResource } />
-      <DialogResource resource={ resource } setResource={ setResource } />
-      <DataTable columns={ getColumns(resource) } data={ resources } />
+      <DialogResource
+        resource={ resource }
+        setResource={ setResource }
+        updateTable={ updateTable }
+      />
+      <DataTable 
+        columns={ getColumns(resource, updateTable) }
+        data={ resources }
+        onRowClick={ handleRowClick }
+      />
     </div>
   )
 }

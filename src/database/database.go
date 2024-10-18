@@ -96,15 +96,36 @@ func getCreateTableQuery(table config.TableSchema) string {
 		var newFieldQuery string
 		if field.Type == config.FieldInt {
 			if field.IsPrimaryKey {
-				newFieldQuery = fmt.Sprintf("%s INTEGER PRIMARY KEY AUTOINCREMENT", field.Name)
+				newFieldQuery = fmt.Sprintf(
+					"%s INTEGER PRIMARY KEY AUTOINCREMENT",
+					field.Name,
+				)
+			} else if field.HasDefault {
+				newFieldQuery = fmt.Sprintf(
+					"%s INTEGER NOT NULL DEFAULT 0",
+					field.Name,
+				)
 			} else {
-				newFieldQuery = fmt.Sprintf("%s INTEGER", field.Name)
+				newFieldQuery = fmt.Sprintf("%s INTEGER NOT NULL", field.Name)
 			}
 		} else if field.Type == config.FieldString {
-			newFieldQuery = fmt.Sprintf("%s TEXT", field.Name)
+			if field.HasDefault {
+				newFieldQuery = fmt.Sprintf(
+					"%s TEXT NOT NULL DEFAULT \"\"",
+					field.Name,
+				)
+			} else {
+				newFieldQuery = fmt.Sprintf("%s TEXT NOT NULL", field.Name)
+			}
 		} else if field.Type == config.FieldTimestamp {
-			newFieldQuery = fmt.Sprintf(
-				"%s DATETIME DEFAULT CURRENT_TIMESTAMP", field.Name)
+			if field.HasDefault {
+				newFieldQuery = fmt.Sprintf(
+					"%s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP",
+					field.Name,
+				)
+			} else {
+				newFieldQuery = fmt.Sprintf("%s DATETIME NOT NULL", field.Name)
+			}
 		} else {
 			log.Printf("error: found table with invalid type")
 		}

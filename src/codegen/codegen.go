@@ -83,8 +83,9 @@ func GenerateMain(destPath, projName string, conf config.Config) error {
 }
 
 type FieldData struct {
-	Name string
-	Type string
+	Name    string
+	Type    string
+	Exclude bool
 }
 
 type ModelsData struct {
@@ -132,37 +133,6 @@ func GenerateModel(destPath string, table config.TableSchema) error {
 	return nil
 }
 
-func toTitle(text string) string {
-	if len(text) == 0 {
-		return ""
-	}
-	return strings.ToUpper(string(text[0])) + text[1:]
-}
-
-func toCamelCase(text string) string {
-	words := make([]string, 0)
-
-	for i, word := range strings.Split(text, "_") {
-		if i == 0 {
-			words = append(words, word)
-		} else {
-			words = append(words, toTitle(word))
-		}
-	}
-
-	return strings.Join(words, "")
-}
-
-func toPascalCase(text string) string {
-	words := make([]string, 0)
-
-	for _, word := range strings.Split(text, "_") {
-		words = append(words, toTitle(word))
-	}
-
-	return strings.Join(words, "")
-}
-
 func getMainData(conf config.Config, projName string) MainData {
 	controllers := make([]string, 0, len(conf.Schema.Tables))
 	for _, table := range conf.Schema.Tables {
@@ -188,8 +158,9 @@ func generateModelData(table config.TableSchema) ModelsData {
 		}
 
 		fields = append(fields, FieldData{
-			Name: field.Name,
-			Type: fieldType,
+			Name:    field.Name,
+			Type:    fieldType,
+			Exclude: field.HasDefault || field.IsPrimaryKey,
 		})
 	}
 
@@ -211,7 +182,7 @@ type DAOTmplData struct {
 	Version           string
 	ProjectName       string
 	Resource          string
-	Fields            []string
+	Fields            []config.FieldSchema
 	TableName         string
 	TableColumns      []string
 	DatabasePath      string
@@ -225,7 +196,8 @@ func GenerateDAO(destPath string, daoData DAOData) error {
 
 	t, err := template.New("resourceDAO.tmpl").Funcs(
 		template.FuncMap{
-			"sub": func(a, b int) int { return a - b },
+			"sub":          func(a, b int) int { return a - b },
+			"toPascalCase": toPascalCase,
 		}).ParseFiles(file)
 	if err != nil {
 		return err
@@ -248,7 +220,7 @@ func GenerateDAO(destPath string, daoData DAOData) error {
 func generateDAOTmplData(daoData DAOData) DAOTmplData {
 	columns := make([]string, 0, len(daoData.Table.Fields))
 	for _, field := range daoData.Table.Fields {
-		if field.IsPrimaryKey {
+		if field.IsPrimaryKey || field.HasDefault {
 			continue
 		}
 
@@ -259,7 +231,7 @@ func generateDAOTmplData(daoData DAOData) DAOTmplData {
 		Version:           config.Version,
 		ProjectName:       daoData.ProjectName,
 		Resource:          toPascalCase(daoData.Table.Name),
-		Fields:            getTableFields(daoData.Table),
+		Fields:            daoData.Table.Fields,
 		TableName:         daoData.Table.Name,
 		TableColumns:      columns,
 		DatabasePath:      daoData.DatabasePath,
@@ -531,4 +503,35 @@ func GenerateResourceTables(destDir string, conf config.Config) error {
 	}
 
 	return nil
+}
+
+func toTitle(text string) string {
+	if len(text) == 0 {
+		return ""
+	}
+	return strings.ToUpper(string(text[0])) + text[1:]
+}
+
+func toCamelCase(text string) string {
+	words := make([]string, 0)
+
+	for i, word := range strings.Split(text, "_") {
+		if i == 0 {
+			words = append(words, word)
+		} else {
+			words = append(words, toTitle(word))
+		}
+	}
+
+	return strings.Join(words, "")
+}
+
+func toPascalCase(text string) string {
+	words := make([]string, 0)
+
+	for _, word := range strings.Split(text, "_") {
+		words = append(words, toTitle(word))
+	}
+
+	return strings.Join(words, "")
 }

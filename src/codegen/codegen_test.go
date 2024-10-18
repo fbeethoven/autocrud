@@ -79,23 +79,33 @@ func TestGenerateModel(t *testing.T) {
 
 package models
 
-
-
 type User struct {
-
-    User_id int
-
+    UserId int ` + "`json:\"user_id\"`" + `
+    Name string ` + "`json:\"name\"`" + `
+    CreatedAt string ` + "`json:\"created_at\"`" + `
 }
 
-
+type UserDTO struct {
+    Name string ` + "`json:\"name\"`" + `
+}
 `
 
 	table := config.TableSchema{
 		Name: "user",
 		Fields: []config.FieldSchema{
 			{
-				Name: "user_id",
-				Type: "int",
+				Name:         "user_id",
+				Type:         "int",
+				IsPrimaryKey: true,
+			},
+			{
+				Name: "name",
+				Type: "string",
+			},
+			{
+				Name:       "created_at",
+				Type:       "string",
+				HasDefault: true,
 			},
 		},
 	}
@@ -114,33 +124,37 @@ func TestGenerateModelImportTime(t *testing.T) {
 
 package models
 
-
 import (
     "time"
 )
 
-
 type User struct {
-
-    User_id int
-
-    Created_at time.Time
-
+    UserId int ` + "`json:\"user_id\"`" + `
+    Name string ` + "`json:\"name\"`" + `
+    CreatedAt time.Time ` + "`json:\"created_at\"`" + `
 }
 
-
+type UserDTO struct {
+    Name string ` + "`json:\"name\"`" + `
+}
 `
 
 	table := config.TableSchema{
 		Name: "user",
 		Fields: []config.FieldSchema{
 			{
-				Name: "user_id",
-				Type: "int",
+				Name:         "user_id",
+				Type:         "int",
+				IsPrimaryKey: true,
 			},
 			{
-				Name: "created_at",
-				Type: "timestamp",
+				Name: "name",
+				Type: "string",
+			},
+			{
+				Name:       "created_at",
+				Type:       "timestamp",
+				HasDefault: true,
 			},
 		},
 	}
@@ -189,11 +203,8 @@ func (r UserDAO) GetResource() ([]models.User, error) {
     for rows.Next() {
         resource := models.User{}
         err := rows.Scan(
-
-            &resource.User_id,
-
-            &resource.Created_at,
-
+            &resource.UserId,
+            &resource.CreatedAt,
         )
         if err != nil {
             return nil, err
@@ -205,7 +216,7 @@ func (r UserDAO) GetResource() ([]models.User, error) {
     return resources, nil
 }
 
-func (r UserDAO) CreateResource(in *models.User) (int, error) {
+func (r UserDAO) CreateResource(in *models.UserDTO) (int, error) {
     db, err := sql.Open("sqlite3", "./test.db")
     if err != nil {
         return 0, err
@@ -216,13 +227,7 @@ func (r UserDAO) CreateResource(in *models.User) (int, error) {
     VALUES (?);` + "`" + `
     result, err := db.Exec(
         query,
-
-
-
-
-        in.Created_at,
-
-
+        in.CreatedAt,
     )
     if err != nil {
         return 0, err
@@ -244,9 +249,7 @@ func (r UserDAO) UpdateResource(in *models.User) error {
     defer db.Close()
 
     query := ` + "`" + `UPDATE user SET
-
     created_at=?
-
     WHERE user_id = ?
     ;` + "`" + `
 
@@ -257,9 +260,8 @@ func (r UserDAO) UpdateResource(in *models.User) error {
     defer stmt.Close()
 
     _, err = stmt.Exec(
-
-        in.Created_at,
-in.User_id,
+        in.CreatedAt,
+        in.UserId,
     )
     if err != nil {
         return err
@@ -280,11 +282,8 @@ func (r UserDAO) GetResourceById(resourceId string) (*models.User, error) {
     resource := models.User{}
 
     err = db.QueryRow(query, resourceId).Scan(
-
-        &resource.User_id,
-
-        &resource.Created_at,
-
+        &resource.UserId,
+        &resource.CreatedAt,
     )
     if err != nil {
         return nil, err
@@ -381,7 +380,7 @@ func (c UserController) GetResource(ctx *gin.Context) {
 }
 
 func (c UserController) CreateResource(ctx *gin.Context) {
-    in := models.User {}
+    in := models.UserDTO {}
 
     err := ctx.BindJSON(&in)
     if err != nil {
@@ -434,8 +433,8 @@ func (c UserController) UpdateResource(ctx *gin.Context) {
         return
     }
 
-    if in.User_id != paramId {
-        log.Printf("error incompatible id: %d vs %d.\n", in.User_id, paramId)
+    if in.UserId != paramId {
+        log.Printf("error incompatible id: %d vs %d.\n", in.UserId, paramId)
         ctx.JSON(http.StatusForbidden, nil)
         return
     }
