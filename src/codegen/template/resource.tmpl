@@ -2,16 +2,18 @@
 
 package models
 
-{{ if .ImportTime }}{{ template "importTime" }}{{ end}}
+{{- if .ImportTime }}
+{{ template "importTime" }}
+{{- end}}
 
 type {{ .ResourceName }} struct {
-{{ range .Fields }}
-    {{ .Name }} {{ .Type }}
-{{ end }}
+{{- range .Fields }}
+    {{ toPascalCase .Name }} {{ .Type }} `json:"{{ .Name -}}"`
+{{- end }}
 }
 
-{{ define "importTime" }}
+{{- define "importTime" }}
 import (
     "time"
 )
-{{end}}
+{{- end }}

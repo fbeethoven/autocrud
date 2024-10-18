@@ -1,0 +1,17 @@
+import { ColumnDef } from "@tanstack/react-table"
+import {
+{{- range . }}
+  {{ toPascalCase .Name }},
+{{- end }}
+} from "./resource"
+
+{{ range . }}
+export const {{ toCamelCase .Name }}Columns: ColumnDef<{{ toPascalCase .Name }}>[] = [
+{{- range .Fields }}
+    {
+        accessorKey: "{{ .Name }}",
+        header: "{{ toPascalCase .Name }}",
+    },
+{{- end }}
+]
+{{ end }}

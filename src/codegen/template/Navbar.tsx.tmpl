@@ -1,0 +1,42 @@
+import { useState } from "react"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+
+type NavbarProps = {
+  resource: string,
+  setResource: (string)=> string,
+}
+
+export const Navbar = ({ resource, setResource }: NavbarProps) => {
+  const handleSelect = (value: string) => {
+    setResource(value)
+  }
+
+  return (
+    <nav className="p-4">
+      <div className="container mx-auto flex justify-between items-center">
+        <div className="text-white text-2xl font-bold">{{ .ProjectName }}</div>
+        <ul className="flex space-x-4">
+          <li>
+            <Select defaultValue={ resource } onValueChange={ handleSelect }>
+              <SelectTrigger className="w-[180px]" >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+{{- range .Tables }}
+                <SelectItem value="{{ .Name }}">{{ toPascalCase .Name }}</SelectItem>
+{{- end }}
+              </SelectContent>
+            </Select>
+          </li>
+        </ul>
+      </div>
+    </nav>
+  )
+}
+

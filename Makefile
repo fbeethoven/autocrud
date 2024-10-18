@@ -5,8 +5,11 @@ all: run clean
 run: 
 	go run ./src/main.go ;
 
-exec:
+bexec:
 	cd myapitest/backend/ && go run ./src/main.go ;
+
+fexec:
+	cd myapitest/frontend/ && npm run dev ;
 
 clean: 
 	rm -r myapitest

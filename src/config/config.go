@@ -1,6 +1,7 @@
 package config
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"log"
@@ -10,13 +11,19 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const Version string = "v0.1.0"
+
 const (
 	FieldInt       string = "int"
 	FieldString    string = "string"
 	FieldTimestamp string = "timestamp"
 )
 
-const Version string = "v0.1.0"
+var TypeMap = map[string]string{
+	FieldInt:       "number",
+	FieldString:    "string",
+	FieldTimestamp: "string",
+}
 
 var validFields = map[string]int{
 	FieldInt:       1,
@@ -146,6 +153,7 @@ func RunCmdInDir(dirPath string, cmd string, args ...string) error {
 type Command struct {
 	Cmd  string
 	Args []string
+	Func func()
 }
 
 func MultiRunCmdInDir(dirPath string, cmds ...Command) error {
@@ -161,9 +169,25 @@ func MultiRunCmdInDir(dirPath string, cmds ...Command) error {
 
 	for _, cmd := range cmds {
 		log.Printf("running command: %v", cmd)
-		_, err = exec.Command(cmd.Cmd, cmd.Args...).Output()
-		if err != nil {
-			return err
+		if cmd.Cmd != "internal" {
+			command := exec.Command(cmd.Cmd, cmd.Args...)
+
+			stdout, err := command.StdoutPipe()
+			if err != nil {
+				return err
+			}
+
+			err = command.Start()
+			if err != nil {
+				return err
+			}
+
+			scanner := bufio.NewScanner(stdout)
+			for scanner.Scan() {
+				log.Println(scanner.Text())
+			}
+		} else {
+			cmd.Func()
 		}
 	}
 

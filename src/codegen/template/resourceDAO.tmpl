@@ -32,9 +32,9 @@ func (r {{ .Resource }}DAO) GetResource() ([]models.{{ .Resource }}, error) {
     for rows.Next() {
         resource := models.{{ .Resource }}{}
         err := rows.Scan(
-{{ range .Fields }}
+{{- range .Fields }}
             &resource.{{ . }},
-{{ end }}
+{{- end }}
         )
         if err != nil {
             return nil, err
@@ -57,11 +57,11 @@ func (r {{ .Resource }}DAO) CreateResource(in *models.{{ .Resource }}) (int, err
     VALUES ({{ range $i, $v := .TableColumns }}?{{ if lt $i ( sub ( len $.TableColumns) 1) }},{{end}}{{end}});`
     result, err := db.Exec(
         query,
-{{ range $i, $v := .Fields }}
-{{ if eq $i 0 }}{{ else }}
+{{- range $i, $v := .Fields }}
+{{- if eq $i 0 }}{{ else }}
         in.{{ . }},
-{{ end }}
-{{ end }}
+{{- end }}
+{{- end }}
     )
     if err != nil {
         return 0, err
@@ -83,9 +83,9 @@ func (r {{ .Resource }}DAO) UpdateResource(in *models.{{ .Resource }}) error {
     defer db.Close()
 
     query := `UPDATE {{ .TableName }} SET
-{{ range $i, $v := .TableColumns }}
-    {{ $v }}=?{{ if lt $i ( sub ( len $.TableColumns) 1) }},{{end}}
-{{end}}
+{{- range $i, $v := .TableColumns }}
+    {{ $v }}=?{{ if lt $i ( sub ( len $.TableColumns) 1) }},{{ end -}}
+{{- end }}
     WHERE {{ .TableIdField }} = ?
     ;`
 
@@ -96,9 +96,11 @@ func (r {{ .Resource }}DAO) UpdateResource(in *models.{{ .Resource }}) error {
     defer stmt.Close()
 
     _, err = stmt.Exec(
-{{ range $i, $v := .Fields }}{{ if eq $i 0 }}{{ else }}
+{{- range $i, $v := .Fields }}{{ if eq $i 0 }}{{ else }}
         in.{{ . }},
-{{ end }}{{ end }}in.{{ index .Fields 0 }},
+{{- end }}
+{{- end }}
+        in.{{ index .Fields 0 }},
     )
     if err != nil {
         return err
@@ -119,9 +121,9 @@ func (r {{ .Resource }}DAO) GetResourceById(resourceId string) (*models.{{ .Reso
     resource := models.{{ .Resource }}{}
 
     err = db.QueryRow(query, resourceId).Scan(
-{{ range .Fields }}
-        &resource.{{ . }},
-{{ end }}
+{{- range .Fields }}
+        &resource.{{ . -}},
+{{- end }}
     )
     if err != nil {
         return nil, err
