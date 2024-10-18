@@ -510,5 +510,25 @@ func GenerateResourceTables(destDir string, conf config.Config) error {
 		return err
 	}
 
+	t, err = template.New("DialogResource.tsx.tmpl").
+		Funcs(template.FuncMap{
+			"toPascalCase": toPascalCase,
+			"toCamelCase":  toCamelCase,
+		}).ParseFiles(getTemplateDir() + "/DialogResource.tsx.tmpl")
+	if err != nil {
+		return err
+	}
+
+	f, err = internalGenerateBuffer.CreateBuffer(destDir + "/DialogResource.tsx")
+	if err != nil {
+		return err
+	}
+	defer internalGenerateBuffer.Close()
+
+	err = t.Execute(f, tables)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

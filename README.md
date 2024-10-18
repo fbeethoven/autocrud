@@ -15,9 +15,13 @@ Automatically generate REST APIs
  - [X] rest api to update and delete a single resource:
    - [X] update resource from a single table.
    - [X] delete resource from a single table.
+ - [ ] add DTO type.
+   - [ ] Config should include type info: primary key, default for insert date,
+        default for update date.
+   - [ ] Use this info from config to create the DTO types
  - [ ] getAll frontend: list view with option to add or delete entry.
  - [ ] getById frontend with edit and delete option.
- - [ ] add proper loggin
+ - [ ] add proper loggin.
  
 # TODO future
  - [ ] parse yaml schema for relational tables.

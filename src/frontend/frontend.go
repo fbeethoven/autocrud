@@ -82,7 +82,8 @@ func (f FrontendGeneratorImpl) Generate() {
 		config.Command{
 			Cmd: "npx",
 			Args: []string{
-				"shadcn@latest", "add", "table", "select",
+				"shadcn@latest", "add",
+				"table", "button", "input", "label", "select", "dialog",
 			},
 		},
 		config.Command{

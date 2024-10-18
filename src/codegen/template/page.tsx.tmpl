@@ -5,14 +5,12 @@ import {
   {{- end }}
 } from "@/components/columns"
 import { DataTable } from "./data-table"
-import { Resources } from "@/types/resources"
+import { Resources, resourceName } from "@/types/resources"
+import { Navbar } from "@/components/Navbar"
+import { DialogResource } from "@/components/DialogResource"
 
-
-type PageProps = {
-  resource: string,
-}
-
-export function DemoPage({ resource }: PageProps) {
+export function AppPage() {
+  const [resource, setResource] = useState<string>(resourceName[0])
   const [resources, setResources] = useState<Resources>([])
 
   useEffect(() => {
@@ -39,7 +37,9 @@ export function DemoPage({ resource }: PageProps) {
   }
 
   return (
-    <div className="container mx-auto py-10">
+    <div className="container mx-auto py-10 space-y-4" >
+      <Navbar resource={ resource } setResource={ setResource } />
+      <DialogResource resource={ resource } setResource={ setResource } />
       <DataTable columns={ getColumns(resource) } data={ resources } />
     </div>
   )
