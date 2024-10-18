@@ -15,10 +15,11 @@ import { Plus } from "lucide-react"
 
 type FieldsProps = {
   setIsOpen: (bool)=>void
+  updateTable: ()=>void
 }
 
 {{ range . }}
-const {{ toPascalCase .Name }}Fields = ({setIsOpen}: FieldsProps) => {
+const {{ toPascalCase .Name }}Fields = ({setIsOpen, updateTable}: FieldsProps) => {
   const formRef = useRef(null)
 
   const handleForm = async (e) => {
@@ -38,17 +39,20 @@ const {{ toPascalCase .Name }}Fields = ({setIsOpen}: FieldsProps) => {
     }
 
     setIsOpen(false)
+    updateTable()
   }
 
   return (
-    <form ref={formRef} className="space-y-8" onSubmit={ handleForm }>
+    <form ref={formRef} className="space-y-4" onSubmit={ handleForm }>
 {{- range .Fields }}
+{{- if or .IsPrimaryKey .HasDefault }}{{else}}
       <div className="grid w-full max-w-sm items-center gap-1.5">
         <Label htmlFor="{{ .Name }}" >
             {{ .Name }}
         </Label>
         <Input id="{{ .Name }}" name="{{ .Name }}" />
       </div>
+{{- end }}
 {{- end }}
       <div className="flex justify-end">
         <Button variant="secondary" type="submit" >
@@ -60,10 +64,14 @@ const {{ toPascalCase .Name }}Fields = ({setIsOpen}: FieldsProps) => {
 }
 {{ end }}
 
-function getFields(resource: string, setIsOpen: (bool)=>void): FC {
+function getFields(
+  resource: string,
+  setIsOpen: (bool)=>void,
+  updateTable: ()=>void,
+): FC {
   switch(resource) {
     {{- range . }}
-    case "{{ .Name }}": return <{{ toPascalCase .Name }}Fields setIsOpen={ setIsOpen }/>
+    case "{{ .Name }}": return <{{ toPascalCase .Name }}Fields setIsOpen={ setIsOpen } updateTable={ updateTable }/>
     {{- end}}
   }
 }
@@ -71,9 +79,10 @@ function getFields(resource: string, setIsOpen: (bool)=>void): FC {
 type DialogResourceProp = {
   resource: string,
   setResource: (string) => string,
+  updateTable: ()=>void,
 }
 
-export const DialogResource = ({resource, setResource}: DialogResourceProp) => {
+export const DialogResource = ({resource, setResource, updateTable}: DialogResourceProp) => {
   const [isOpen, setIsOpen] = useState<bool>(false)
 
   return (
@@ -90,7 +99,7 @@ export const DialogResource = ({resource, setResource}: DialogResourceProp) => {
             Input data to create a new { resource }.
           </DialogDescription>
         </DialogHeader>
-        { getFields(resource, setIsOpen) }
+        { getFields(resource, setIsOpen, updateTable) }
       </DialogContent>
     </Dialog>
   )

@@ -16,7 +16,7 @@ func main() {
 		return
 	}
 
-	log.Printf("%v", conf)
+	log.Printf("%+v", conf)
 
 	directories, err := database.CreateDbIfNecessary(conf)
 	if err != nil {

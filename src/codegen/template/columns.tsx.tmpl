@@ -1,4 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table"
+import { Button } from "@/components/ui/button"
+import { Trash2 } from "lucide-react"
 import {
 {{- range . }}
   {{ toPascalCase .Name }},
@@ -6,12 +8,41 @@ import {
 } from "./resource"
 
 {{ range . }}
-export const {{ toCamelCase .Name }}Columns: ColumnDef<{{ toPascalCase .Name }}>[] = [
+
+const delete{{ toCamelCase .Name }} = async (
+    item: {{ toPascalCase .Name }},
+    updateTable: ()=>void,
+) => {
+    const deleteUrl = "http://127.0.0.1:8080/{{ .Name }}"
 {{- range .Fields }}
-    {
-        accessorKey: "{{ .Name }}",
-        header: "{{ toPascalCase .Name }}",
-    },
+{{- if .IsPrimaryKey }}
+    const result = await fetch(`${deleteUrl}/${item.{{ .Name }} }`,
 {{- end }}
-]
+{{- end }}
+      {
+        method: "DELETE",
+      }
+    )
+
+    updateTable()
+}
+
+export const get{{ toPascalCase .Name }}Columns = (updateTable:()=>void): ColumnDef<{{ toPascalCase .Name }}>[] => {
+    return [
+{{- range .Fields }}
+        {
+            accessorKey: "{{ .Name }}",
+            header: "{{ toPascalCase .Name }}",
+        },
+{{- end }}
+        {
+            id: "delete",
+            cell: ({row}) => (
+                <Button variant="ghost" onClick={()=>delete{{ .Name }}(row.original, updateTable)}>
+                    <Trash2/>
+                </Button>
+            ),
+        },
+    ]
+}
 {{ end }}
