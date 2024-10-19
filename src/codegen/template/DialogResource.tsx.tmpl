@@ -57,15 +57,15 @@ const {{ toPascalCase .Name }}Fields = ({setIsOpen, updateTable}: FieldsProps) =
             {{ .Name }}
         </Label>
 {{- if eq .Type "int" }}
-        <Input type="number" {...register("{{ .Name }}", {valueAsNumber: true})} />
+        <Input id="{{ .Name }}" type="number" {...register("{{ .Name }}", {valueAsNumber: true})} />
         { errors.{{ .Name }} && <p className="text-red-500">{errors.{{ .Name }}.message}</p>}
       </div>
 {{- else if eq .Type "timestamp" }}
-        <Input type="date" {...register("{{ .Name }}")} />
+        <Input id="{{ .Name }}" type="date" {...register("{{ .Name }}")} />
         { errors.{{ .Name }} && <p className="text-red-500">{errors.{{ .Name }}.message}</p>}
       </div>
 {{else}}
-        <Input {...register("{{ .Name }}")} />
+        <Input id="{{ .Name }}" {...register("{{ .Name }}")} />
         { errors.{{ .Name }} && <p className="text-red-500">{errors.{{ .Name }}.message}</p>}
       </div>
 {{- end }}

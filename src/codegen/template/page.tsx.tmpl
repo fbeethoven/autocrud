@@ -31,7 +31,10 @@ export function AppPage() {
     setNeedUpdate(!needUpdate)
   }
 
-  const handleRowClick = (item) => {
+  const handleRowClick = (e, item) => {
+    if (e.target.matches("button")) {
+      return
+    }
     console.log(item)
   }
 
