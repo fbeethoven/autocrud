@@ -22,7 +22,7 @@ const (
 var TypeMap = map[string]string{
 	FieldInt:       "number",
 	FieldString:    "string",
-	FieldTimestamp: "string",
+	FieldTimestamp: "Date",
 }
 
 var validFields = map[string]int{

@@ -78,18 +78,19 @@ func (f FrontendGeneratorImpl) Generate() {
 				"shadcn@latest", "init", "--defaults",
 			},
 		},
-
+		config.Command{
+			Cmd: "npm",
+			Args: []string{
+				"install",
+				"react-hook-form", "@hookform/resolvers", "zod",
+				"@tanstack/react-table", "lucide-react",
+			},
+		},
 		config.Command{
 			Cmd: "npx",
 			Args: []string{
 				"shadcn@latest", "add",
 				"table", "button", "input", "label", "select", "dialog",
-			},
-		},
-		config.Command{
-			Cmd: "npm",
-			Args: []string{
-				"install", "@tanstack/react-table", "lucide-react",
 			},
 		},
 	)

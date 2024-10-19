@@ -380,21 +380,21 @@ func (c UserController) GetResource(ctx *gin.Context) {
 }
 
 func (c UserController) CreateResource(ctx *gin.Context) {
-    in := models.UserDTO {}
+    in := models.UserDTO{}
 
     err := ctx.BindJSON(&in)
     if err != nil {
         log.Printf("error %v\n", err)
-        ctx.JSON(http.StatusInternalServerError, nil)
+        ctx.JSON(http.StatusBadRequest, nil)
         return
     }
 
-    log.Printf("received %v\n", in)
+    log.Printf("received %+v\n", in)
 
     resourceId, err := c.UserDAO.CreateResource(&in)
     if err != nil {
         log.Printf("error %v\n", err)
-        ctx.JSON(http.StatusInternalServerError, nil)
+        ctx.JSON(http.StatusBadRequest, nil)
         return
     }
 

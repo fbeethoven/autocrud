@@ -21,8 +21,10 @@ Automatically generate REST APIs
    - [X] Use this info from config to create the DTO types
  - [X] getAll frontend: list view with option to add or delete entry.
  - [ ] getById frontend with edit option.
+ - [ ] use zod to validate inputs.
+ - [ ] add notification system.
  - [ ] add proper loggin.
- 
+
 # TODO future
  - [ ] parse yaml schema for relational tables.
  - [ ] search items in getAll view

@@ -1,4 +1,6 @@
 import { FC, useRef, useState } from "react"
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Dialog,
   DialogContent,
@@ -12,6 +14,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
+{{- range . }}
+import { {{ toCamelCase .Name }}Schema } from "@/types/{{ toPascalCase .Name }}"
+{{- end }}
 
 type FieldsProps = {
   setIsOpen: (bool)=>void
@@ -20,17 +25,18 @@ type FieldsProps = {
 
 {{ range . }}
 const {{ toPascalCase .Name }}Fields = ({setIsOpen, updateTable}: FieldsProps) => {
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    resolver: zodResolver( {{ toCamelCase .Name }}Schema ),
+  })
   const formRef = useRef(null)
 
-  const handleForm = async (e) => {
-    e.preventDefault()
-    const payload = Object.fromEntries(new FormData(e.target))
-
+  const handleForm = async (data) => {
+    console.log("submitted:", data)
     const result = await fetch(
       "http://127.0.0.1:8080/{{ .Name }}",
       {
         method: "POST",
-        body: JSON.stringify(payload)
+        body: JSON.stringify(data)
       }
     )
 
@@ -43,15 +49,22 @@ const {{ toPascalCase .Name }}Fields = ({setIsOpen, updateTable}: FieldsProps) =
   }
 
   return (
-    <form ref={formRef} className="space-y-4" onSubmit={ handleForm }>
+    <form ref={formRef} className="space-y-4" onSubmit={ handleSubmit(handleForm) }>
 {{- range .Fields }}
 {{- if or .IsPrimaryKey .HasDefault }}{{else}}
       <div className="grid w-full max-w-sm items-center gap-1.5">
         <Label htmlFor="{{ .Name }}" >
             {{ .Name }}
         </Label>
-        <Input id="{{ .Name }}" name="{{ .Name }}" />
+{{- if eq .Type "int" }}
+        <Input type="number" {...register("{{ .Name }}", {valueAsNumber: true})} />
+        { errors.{{ .Name }} && <p>{errors.{{ .Name }}.message}</p>}
       </div>
+{{else}}
+        <Input {...register("{{ .Name }}")} />
+        { errors.{{ .Name }} && <p>{errors.{{ .Name }}.message}</p>}
+      </div>
+{{- end }}
 {{- end }}
 {{- end }}
       <div className="flex justify-end">

@@ -189,6 +189,8 @@ type DAOTmplData struct {
 	QueryResource     string
 	QueryResourceById string
 	TableIdField      string
+	ImportTime        bool
+	ImportStrconv     bool
 }
 
 func GenerateDAO(destPath string, daoData DAOData) error {
@@ -219,9 +221,19 @@ func GenerateDAO(destPath string, daoData DAOData) error {
 
 func generateDAOTmplData(daoData DAOData) DAOTmplData {
 	columns := make([]string, 0, len(daoData.Table.Fields))
+	importTime := false
+	importStrconv := false
 	for _, field := range daoData.Table.Fields {
 		if field.IsPrimaryKey || field.HasDefault {
 			continue
+		}
+
+		if field.Type == config.FieldTimestamp {
+			importTime = true
+		}
+
+		if field.Type == config.FieldInt {
+			importStrconv = true
 		}
 
 		columns = append(columns, field.Name)
@@ -238,6 +250,8 @@ func generateDAOTmplData(daoData DAOData) DAOTmplData {
 		QueryResource:     database.GetResourceQuery(daoData.Table),
 		QueryResourceById: database.GetResourceByIdQuery(daoData.Table),
 		TableIdField:      getTableIdField(daoData.Table),
+		ImportTime:        importTime,
+		ImportStrconv:     importStrconv,
 	}
 }
 
