@@ -1,0 +1,45 @@
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Resource } from "@/types/resources"
+
+
+interface DisplayDialogProps {
+  resourceName: string,
+  resource: Resource
+  isDisplayOpen
+  setIsDisplayOpen
+}
+
+
+
+export const DisplayResource = ({
+  resourceName,
+  resource,
+  isDisplayOpen,
+  setIsDisplayOpen,
+}: DisplayResourceProp
+) => {
+  const makeTitle = (snakeCase: string): string => {
+    return snakeCase.split("_").map((item)=> {
+      return item.charAt(0).toUpperCase() + item.slice(1)
+    }).join(" ")
+  }
+
+
+  return (
+    <Dialog open={ isDisplayOpen } onOpenChange={ setIsDisplayOpen } >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{ makeTitle(resourceName) }</DialogTitle>
+          <DialogDescription />
+        </DialogHeader>
+        <pre>{JSON.stringify(resource, null, 2)}</pre>
+      </DialogContent>
+    </Dialog>
+  )
+}

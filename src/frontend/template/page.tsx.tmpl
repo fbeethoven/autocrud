@@ -8,6 +8,7 @@ import { DataTable } from "./data-table"
 import { Resource, Resources, resourceName } from "@/types/resources"
 import { Navbar } from "@/components/Navbar"
 import { DialogResource } from "@/components/DialogResource"
+import { DisplayResource } from "@/components/DisplayResource"
 import { Toaster, toast } from "sonner"
 
 const getColumns = (
@@ -28,6 +29,7 @@ export function AppPage() {
   const [needUpdate, setNeedUpdate] = useState<bool>(false)
   const [resources, setResources] = useState<Resources>([])
   const [itemSelected, setItemSelected] = useState<Resource|null>(null)
+  const [isDisplayOpen, setIsDisplayOpen] = useState<bool>(false)
 
   const updateTable = () => {
     setNeedUpdate(!needUpdate)
@@ -38,6 +40,7 @@ export function AppPage() {
       return
     }
     setItemSelected(item)
+    setIsDisplayOpen(true)
     toast.message(JSON.stringify(itemSelected, null, 2))
   }
 
@@ -60,6 +63,12 @@ export function AppPage() {
         resource={ resource }
         setResource={ setResource }
         updateTable={ updateTable }
+      />
+      <DisplayResource
+        resourceName={ resource }
+        resource={ itemSelected }
+        isDisplayOpen={ isDisplayOpen }
+        setIsDisplayOpen={ setIsDisplayOpen }
       />
       <DataTable 
         columns={ getColumns(resource, updateTable) }
