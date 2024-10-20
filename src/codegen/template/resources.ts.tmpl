@@ -9,3 +9,9 @@ export type Resources = (
     | Array<{{ toPascalCase .Name }}>
 {{- end }}
 )
+
+export type Resource = (
+{{- range . }}
+    | {{ toPascalCase .Name }}
+{{- end }}
+)

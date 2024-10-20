@@ -29,7 +29,6 @@ func New(
 }
 
 func (f FrontendGeneratorImpl) Generate() {
-	// projectName := "frontend"
 	err := config.MultiRunCmdInDir(
 		f.Directories.Frontend,
 		config.Command{
@@ -83,14 +82,15 @@ func (f FrontendGeneratorImpl) Generate() {
 			Args: []string{
 				"install",
 				"react-hook-form", "@hookform/resolvers", "zod",
-				"@tanstack/react-table", "lucide-react",
+				"@tanstack/react-table", "lucide-react", "sonner",
 			},
 		},
 		config.Command{
 			Cmd: "npx",
 			Args: []string{
 				"shadcn@latest", "add",
-				"table", "button", "input", "label", "select", "dialog",
+				"button", "input", "label", "select",
+				"dialog", "table",
 			},
 		},
 	)

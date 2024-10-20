@@ -1,6 +1,7 @@
 import { FC, useRef, useState } from "react"
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from "react-hook-form"
+import { toast } from "sonner"
+import { zodResolver } from "@hookform/resolvers/zod"
 import {
   Dialog,
   DialogContent,
@@ -39,6 +40,8 @@ const {{ toPascalCase .Name }}Fields = ({setIsOpen, updateTable}: FieldsProps) =
         body: JSON.stringify(data)
       }
     )
+
+    toast.success("New {{ toPascalCase .Name }} created")
 
     if (formRef.current) {
       formRef.current.reset()

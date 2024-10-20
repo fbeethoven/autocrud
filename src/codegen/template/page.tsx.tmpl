@@ -5,9 +5,10 @@ import {
   {{- end }}
 } from "@/components/columns"
 import { DataTable } from "./data-table"
-import { Resources, resourceName } from "@/types/resources"
+import { Resource, Resources, resourceName } from "@/types/resources"
 import { Navbar } from "@/components/Navbar"
 import { DialogResource } from "@/components/DialogResource"
+import { Toaster, toast } from "sonner"
 
 const getColumns = (
   resource: string,
@@ -24,8 +25,9 @@ const getColumns = (
 
 export function AppPage() {
   const [resource, setResource] = useState<string>(resourceName[0])
-  const [needUpdate, setNeedUpdate] = useState<false>(false)
+  const [needUpdate, setNeedUpdate] = useState<bool>(false)
   const [resources, setResources] = useState<Resources>([])
+  const [itemSelected, setItemSelected] = useState<Resource|null>(null)
 
   const updateTable = () => {
     setNeedUpdate(!needUpdate)
@@ -35,7 +37,8 @@ export function AppPage() {
     if (e.target.matches("button")) {
       return
     }
-    console.log(item)
+    setItemSelected(item)
+    toast.message(JSON.stringify(itemSelected, null, 2))
   }
 
   useEffect(() => {
@@ -63,6 +66,7 @@ export function AppPage() {
         data={ resources }
         onRowClick={ handleRowClick }
       />
+      <Toaster richColors closeButton />
     </div>
   )
 }
