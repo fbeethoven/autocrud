@@ -11,8 +11,10 @@ export const {{ toCamelCase .Name }}Schema = z.object({
 {{- if or .IsPrimaryKey .HasDefault }}{{ else }}
 {{- if eq .Type "timestamp" }}
     {{ .Name }}: z.coerce.date(),
+{{- else if eq .Type "int" }}
+    {{ .Name }}: z.coerce.number().int(),
 {{- else }}
-    {{ .Name }}: z.{{ getType .Type -}}(),
+    {{ .Name }}: z.string(),
 {{- end }}
 {{- end }}
 {{- end }}

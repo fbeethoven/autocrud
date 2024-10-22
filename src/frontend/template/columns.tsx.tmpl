@@ -3,12 +3,12 @@ import { Button } from "@/components/ui/button"
 import { Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import {
-{{- range . }}
+{{- range .Tables }}
   {{ toPascalCase .Name }},
 {{- end }}
 } from "./resource"
 
-{{ range . }}
+{{ range .Tables }}
 
 const delete{{ toCamelCase .Name }} = async (
     item: {{ toPascalCase .Name }},

@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
-{{- range . }}
+{{- range .Tables }}
 import { {{ toCamelCase .Name }}Schema } from "@/types/{{ toPascalCase .Name }}"
 {{- end }}
 
@@ -24,7 +24,7 @@ type FieldsProps = {
   updateTable: ()=>void
 }
 
-{{ range . }}
+{{ range .Tables }}
 const {{ toPascalCase .Name }}Fields = ({setIsOpen, updateTable}: FieldsProps) => {
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver( {{ toCamelCase .Name }}Schema ),
@@ -59,15 +59,11 @@ const {{ toPascalCase .Name }}Fields = ({setIsOpen, updateTable}: FieldsProps) =
         <Label htmlFor="{{ .Name }}" >
             {{ .Name }}
         </Label>
-{{- if eq .Type "int" }}
-        <Input id="{{ .Name }}" type="number" {...register("{{ .Name }}", {valueAsNumber: true})} />
-        { errors.{{ .Name }} && <p className="text-red-500">{errors.{{ .Name }}.message}</p>}
-      </div>
-{{- else if eq .Type "timestamp" }}
+{{- if eq .Type "timestamp" }}
         <Input id="{{ .Name }}" type="date" {...register("{{ .Name }}")} />
         { errors.{{ .Name }} && <p className="text-red-500">{errors.{{ .Name }}.message}</p>}
       </div>
-{{else}}
+{{- else }}
         <Input id="{{ .Name }}" {...register("{{ .Name }}")} />
         { errors.{{ .Name }} && <p className="text-red-500">{errors.{{ .Name }}.message}</p>}
       </div>
@@ -90,7 +86,7 @@ function getFields(
   updateTable: ()=>void,
 ): FC {
   switch(resource) {
-    {{- range . }}
+    {{- range .Tables }}
     case "{{ .Name }}": return <{{ toPascalCase .Name }}Fields setIsOpen={ setIsOpen } updateTable={ updateTable }/>
     {{- end}}
   }

@@ -6,16 +6,57 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Resource } from "@/types/resources"
+{{- range .Tables }}
+import { {{ toPascalCase .Name }} } from "@/types/{{ toPascalCase .Name }}" 
+{{- end }}
+import { Pencil } from "lucide-react"
 
-
-interface DisplayDialogProps {
-  resourceName: string,
-  resource: Resource
-  isDisplayOpen
-  setIsDisplayOpen
+{{- range .Tables }}
+interface {{ toPascalCase .Name }}CardProps {
+  resource: {{ toPascalCase .Name }}
 }
 
+const {{ toPascalCase .Name }}Card = ({resource}: ResourceCardProps) => {
 
+  return (
+    <div className="space-y-4" >
+{{- range .Fields }}
+      <div className="grid w-full max-w-sm items-center gap-1.5">
+        <p className="text-muted-foreground">{{ .Name }}</p>
+        <p>{ resource.{{ .Name }} }</p>
+      </div>
+{{- end }}
+    </div>
+  )
+}
+{{- end }}
+
+interface ResourceCardProps {
+  resourceName: string
+  resource: Resource
+}
+
+const ResourceCard = ({
+  resourceName,
+  resource,
+}: ResourceCardProps) => {
+
+  switch(resourceName) {
+{{- range .Tables }}
+    case "{{ .Name }}":
+      return <{{ toPascalCase .Name }}Card resource={ resource } />
+{{- end }}
+  }
+
+  return (<></>)
+}
+
+interface DisplayDialogProps {
+  resourceName: string
+  resource: Resource
+  isDisplayOpen: bool
+  setIsDisplayOpen: (bool)=>bool
+}
 
 export const DisplayResource = ({
   resourceName,
@@ -30,7 +71,6 @@ export const DisplayResource = ({
     }).join(" ")
   }
 
-
   return (
     <Dialog open={ isDisplayOpen } onOpenChange={ setIsDisplayOpen } >
       <DialogContent>
@@ -38,7 +78,10 @@ export const DisplayResource = ({
           <DialogTitle>{ makeTitle(resourceName) }</DialogTitle>
           <DialogDescription />
         </DialogHeader>
-        <pre>{JSON.stringify(resource, null, 2)}</pre>
+        <ResourceCard 
+          resourceName={resourceName}
+          resource={resource}
+        />
       </DialogContent>
     </Dialog>
   )

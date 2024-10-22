@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react"
 import {
-  {{- range . }}
+  {{- range .Tables }}
   {{ toPascalCase .Name }}, get{{ toPascalCase .Name }}Columns,
   {{- end }}
 } from "@/components/columns"
 import { DataTable } from "./data-table"
 import { Resource, Resources, resourceName } from "@/types/resources"
 import { Navbar } from "@/components/Navbar"
-import { DialogResource } from "@/components/DialogResource"
+import { ResourceBar } from "@/components/ResourceBar"
 import { DisplayResource } from "@/components/DisplayResource"
 import { Toaster, toast } from "sonner"
 
@@ -16,7 +16,7 @@ const getColumns = (
   updateTable: ()=>void,
 ): ColumnDef<TData, TValue>[] => {
   switch (resource) {
-    {{- range . }}
+    {{- range .Tables }}
      case "{{ .Name }}": return get{{ toPascalCase .Name }}Columns(updateTable)
     {{- end }}
     default:
@@ -58,8 +58,8 @@ export function AppPage() {
 
   return (
     <div className="container mx-auto py-10 space-y-4" >
-      <Navbar resource={ resource } setResource={ setResource } />
-      <DialogResource
+      <Navbar />
+      <ResourceBar
         resource={ resource }
         setResource={ setResource }
         updateTable={ updateTable }

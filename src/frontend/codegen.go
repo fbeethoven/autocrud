@@ -66,41 +66,29 @@ func GenerateResources(destDir string, tables []config.TableSchema) error {
 	return nil
 }
 
-func GenerateResourceTables(destDir string, conf config.Config) error {
-	tables := conf.Schema.Tables
-	file := codegen.GetTemplateDir() + "/columns.tsx.tmpl"
+func generateComponent(conf config.Config, destDir, fileName string) error {
+	templatePath := fmt.Sprintf(
+		"%s/%s.tsx.tmpl",
+		codegen.GetTemplateDir(),
+		fileName,
+	)
+	templateName := fmt.Sprintf("%s.tsx.tmpl", fileName)
 
-	t, err := template.New("columns.tsx.tmpl").
+	t, err := template.New(templateName).
 		Funcs(template.FuncMap{
 			"toPascalCase": codegen.ToPascalCase,
 			"toCamelCase":  codegen.ToCamelCase,
-		}).ParseFiles(file)
+		}).ParseFiles(templatePath)
 	if err != nil {
 		return err
 	}
 
-	f, err := codegen.BufferGenerator.CreateBuffer(destDir + "/columns.tsx")
-	if err != nil {
-		return err
-	}
-	defer codegen.BufferGenerator.Close()
-
-	err = t.Execute(f, tables)
-	if err != nil {
-		return err
-	}
-
-	file = codegen.GetTemplateDir() + "/Navbar.tsx.tmpl"
-
-	t, err = template.New("Navbar.tsx.tmpl").
-		Funcs(template.FuncMap{
-			"toPascalCase": codegen.ToPascalCase,
-		}).ParseFiles(file)
-	if err != nil {
-		return err
-	}
-
-	f, err = codegen.BufferGenerator.CreateBuffer(destDir + "/Navbar.tsx")
+	f, err := codegen.BufferGenerator.CreateBuffer(
+		fmt.Sprintf(
+			"%s/%s.tsx",
+			destDir,
+			fileName,
+		))
 	if err != nil {
 		return err
 	}
@@ -108,69 +96,42 @@ func GenerateResourceTables(destDir string, conf config.Config) error {
 
 	err = t.Execute(f, map[string]any{
 		"ProjectName": conf.Name,
-		"Tables":      tables,
+		"Tables":      conf.Schema.Tables,
 	})
 	if err != nil {
 		return err
 	}
 
-	Tablefile := codegen.GetTemplateDir() + "/page.tsx.tmpl"
-	t, err = template.New("page.tsx.tmpl").
-		Funcs(template.FuncMap{
-			"toPascalCase": codegen.ToPascalCase,
-			"toCamelCase":  codegen.ToCamelCase,
-		}).ParseFiles(Tablefile)
+	return nil
+}
+
+func GenerateResourceTables(destDir string, conf config.Config) error {
+	err := generateComponent(conf, destDir, "columns")
 	if err != nil {
 		return err
 	}
 
-	f, err = codegen.BufferGenerator.CreateBuffer(destDir + "/page.tsx")
-	if err != nil {
-		return err
-	}
-	defer codegen.BufferGenerator.Close()
-
-	err = t.Execute(f, tables)
+	err = generateComponent(conf, destDir, "Navbar")
 	if err != nil {
 		return err
 	}
 
-	t, err = template.New("DialogResource.tsx.tmpl").
-		Funcs(template.FuncMap{
-			"toPascalCase": codegen.ToPascalCase,
-			"toCamelCase":  codegen.ToCamelCase,
-		}).ParseFiles(codegen.GetTemplateDir() + "/DialogResource.tsx.tmpl")
+	err = generateComponent(conf, destDir, "ResourceBar")
 	if err != nil {
 		return err
 	}
 
-	f, err = codegen.BufferGenerator.CreateBuffer(destDir + "/DialogResource.tsx")
-	if err != nil {
-		return err
-	}
-	defer codegen.BufferGenerator.Close()
-
-	err = t.Execute(f, tables)
+	err = generateComponent(conf, destDir, "page")
 	if err != nil {
 		return err
 	}
 
-	t, err = template.New("DisplayResource.tsx.tmpl").
-		Funcs(template.FuncMap{
-			"toPascalCase": codegen.ToPascalCase,
-			"toCamelCase":  codegen.ToCamelCase,
-		}).ParseFiles(codegen.GetTemplateDir() + "/DisplayResource.tsx.tmpl")
+	err = generateComponent(conf, destDir, "DialogResource")
 	if err != nil {
 		return err
 	}
 
-	f, err = codegen.BufferGenerator.CreateBuffer(destDir + "/DisplayResource.tsx")
-	if err != nil {
-		return err
-	}
-	defer codegen.BufferGenerator.Close()
-
-	err = t.Execute(f, tables)
+	err = generateComponent(conf, destDir, "DisplayResource")
 	if err != nil {
 		return err
 	}
