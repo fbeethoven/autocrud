@@ -9,8 +9,7 @@ import {
 } from "./resource"
 
 {{ range .Tables }}
-
-const delete{{ toCamelCase .Name }} = async (
+export const delete{{ toPascalCase .Name }} = async (
     item: {{ toPascalCase .Name }},
     updateTable: ()=>void,
 ) => {
@@ -40,7 +39,10 @@ export const get{{ toPascalCase .Name }}Columns = (updateTable:()=>void): Column
         {
             id: "delete",
             cell: ({row}) => (
-                <Button variant="ghost" onClick={()=>delete{{ .Name }}(row.original, updateTable)}>
+                <Button 
+                    variant="ghost"
+                    onClick={()=>delete{{ toPascalCase .Name }}(row.original, updateTable)}
+                >
                     <Trash2/>
                 </Button>
             ),

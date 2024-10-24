@@ -69,6 +69,7 @@ export function AppPage() {
         resource={ itemSelected }
         isDisplayOpen={ isDisplayOpen }
         setIsDisplayOpen={ setIsDisplayOpen }
+        updateTable={ updateTable }
       />
       <DataTable 
         columns={ getColumns(resource, updateTable) }
