@@ -1,4 +1,4 @@
-module autocrud
+module github.com/fbeethoven/autocrud
 
 go 1.22.3
 

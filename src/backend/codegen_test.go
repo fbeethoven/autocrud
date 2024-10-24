@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"autocrud/src/codegen"
-	"autocrud/src/config"
+	"github.com/fbeethoven/autocrud/src/codegen"
+	"github.com/fbeethoven/autocrud/src/config"
 )
 
 type TestGenerateBuffer struct {

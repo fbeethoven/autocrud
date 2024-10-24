@@ -6,9 +6,9 @@ import (
 	"runtime"
 	"text/template"
 
-	"autocrud/src/codegen"
-	"autocrud/src/config"
-	"autocrud/src/database"
+	"github.com/fbeethoven/autocrud/src/codegen"
+	"github.com/fbeethoven/autocrud/src/config"
+	"github.com/fbeethoven/autocrud/src/database"
 )
 
 type MainData struct {

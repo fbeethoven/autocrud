@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"autocrud/src/config"
+	"github.com/fbeethoven/autocrud/src/config"
 )
 
 func TestGetCreateTableQuery(t *testing.T) {
