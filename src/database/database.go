@@ -9,7 +9,7 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 
-	"autocrud/src/config"
+	"github.com/fbeethoven/autocrud/src/config"
 )
 
 type ProjectDirectories struct {

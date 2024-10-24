@@ -1,3 +1,4 @@
+import React from "react"
 import {
   ColumnDef,
   flexRender,
@@ -17,7 +18,7 @@ import {
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
-  onRowClick: (any)=>void
+  onRowClick: (e: React.MouseEvent<HTMLElemtn>, any)=>void
 }
 
 export function DataTable<TData, TValue>({
@@ -58,7 +59,7 @@ export function DataTable<TData, TValue>({
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
-                onClick={()=> onRowClick(row.original)}
+                onClick={(e)=> onRowClick(e, row.original)}
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>

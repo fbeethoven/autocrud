@@ -9,6 +9,8 @@ import (
 	"os/exec"
 
 	"gopkg.in/yaml.v2"
+
+	"github.com/fbeethoven/autocrud/src/codegen"
 )
 
 const Version string = "v0.1.0"
@@ -22,7 +24,7 @@ const (
 var TypeMap = map[string]string{
 	FieldInt:       "number",
 	FieldString:    "string",
-	FieldTimestamp: "string",
+	FieldTimestamp: "Date",
 }
 
 var validFields = map[string]int{
@@ -198,4 +200,9 @@ func MultiRunCmdInDir(dirPath string, cmds ...Command) error {
 	}
 
 	return nil
+}
+
+func Generate() {
+	codegen.SetTemplateDir()
+	codegen.GeneratorFactory("config.yaml", "config.yaml")()
 }

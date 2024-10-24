@@ -9,7 +9,7 @@ Automatically generate REST APIs
         only types available will be INT, VARCHAR, TIMESTAMP, VARTEXT
  - [X] write test for codegen.
  - [X] workout absolute path for codegen templates.
- - [ ] rest api to create and read a single resource:
+ - [X] rest api to create and read a single resource:
    - [X] create resource from a single table.
    - [X] read resource from a single table.
  - [X] rest api to update and delete a single resource:
@@ -20,10 +20,13 @@ Automatically generate REST APIs
         default for update date.
    - [X] Use this info from config to create the DTO types
  - [X] getAll frontend: list view with option to add or delete entry.
+ - [X] use zod to validate inputs.
+ - [X] add notification system.
+ - [ ] cmd: autocrud [-f --file <config.yaml>] [-t --template]
+
+# TODO future
  - [ ] getById frontend with edit option.
  - [ ] add proper loggin.
- 
-# TODO future
  - [ ] parse yaml schema for relational tables.
  - [ ] search items in getAll view
  - [ ] get names for backend frontend and database directories from config.

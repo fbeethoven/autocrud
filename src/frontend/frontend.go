@@ -7,10 +7,9 @@ import (
 	"log"
 	"os"
 
-	"autocrud/src/codegen"
-	_ "autocrud/src/codegen"
-	"autocrud/src/config"
-	"autocrud/src/database"
+	"github.com/fbeethoven/autocrud/src/codegen"
+	"github.com/fbeethoven/autocrud/src/config"
+	"github.com/fbeethoven/autocrud/src/database"
 )
 
 type FrontendGeneratorImpl struct {
@@ -29,7 +28,8 @@ func New(
 }
 
 func (f FrontendGeneratorImpl) Generate() {
-	// projectName := "frontend"
+	codegen.SetTemplateDir()
+
 	err := config.MultiRunCmdInDir(
 		f.Directories.Frontend,
 		config.Command{
@@ -78,18 +78,20 @@ func (f FrontendGeneratorImpl) Generate() {
 				"shadcn@latest", "init", "--defaults",
 			},
 		},
-
+		config.Command{
+			Cmd: "npm",
+			Args: []string{
+				"install",
+				"react-hook-form", "@hookform/resolvers", "zod",
+				"@tanstack/react-table", "lucide-react", "sonner",
+			},
+		},
 		config.Command{
 			Cmd: "npx",
 			Args: []string{
 				"shadcn@latest", "add",
-				"table", "button", "input", "label", "select", "dialog",
-			},
-		},
-		config.Command{
-			Cmd: "npm",
-			Args: []string{
-				"install", "@tanstack/react-table", "lucide-react",
+				"button", "input", "label", "select",
+				"dialog", "table",
 			},
 		},
 	)
@@ -138,12 +140,12 @@ func (f FrontendGeneratorImpl) Generate() {
 		log.Printf("[FRONTEND] generated file for %v", file)
 	}
 
-	err = codegen.GenerateResources(typesDir, f.Config.Schema.Tables)
+	err = GenerateResources(typesDir, f.Config.Schema.Tables)
 	if err != nil {
 		log.Printf("[FRONTEND] error %v", err)
 	}
 
-	err = codegen.GenerateResourceTables(componentsDir, f.Config)
+	err = GenerateResourceTables(componentsDir, f.Config)
 	if err != nil {
 		log.Printf("[FRONTEND] error %v", err)
 	}
