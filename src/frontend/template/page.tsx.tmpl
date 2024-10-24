@@ -1,20 +1,22 @@
 import { useState, useEffect } from "react"
 import {
-  {{- range . }}
+  {{- range .Tables }}
   {{ toPascalCase .Name }}, get{{ toPascalCase .Name }}Columns,
   {{- end }}
 } from "@/components/columns"
 import { DataTable } from "./data-table"
-import { Resources, resourceName } from "@/types/resources"
+import { Resource, Resources, resourceName } from "@/types/resources"
 import { Navbar } from "@/components/Navbar"
-import { DialogResource } from "@/components/DialogResource"
+import { ResourceBar } from "@/components/ResourceBar"
+import { DisplayResource } from "@/components/DisplayResource"
+import { Toaster, toast } from "sonner"
 
 const getColumns = (
   resource: string,
   updateTable: ()=>void,
 ): ColumnDef<TData, TValue>[] => {
   switch (resource) {
-    {{- range . }}
+    {{- range .Tables }}
      case "{{ .Name }}": return get{{ toPascalCase .Name }}Columns(updateTable)
     {{- end }}
     default:
@@ -24,15 +26,22 @@ const getColumns = (
 
 export function AppPage() {
   const [resource, setResource] = useState<string>(resourceName[0])
-  const [needUpdate, setNeedUpdate] = useState<false>(false)
+  const [needUpdate, setNeedUpdate] = useState<bool>(false)
   const [resources, setResources] = useState<Resources>([])
+  const [itemSelected, setItemSelected] = useState<Resource|null>(null)
+  const [isDisplayOpen, setIsDisplayOpen] = useState<bool>(false)
 
   const updateTable = () => {
     setNeedUpdate(!needUpdate)
   }
 
-  const handleRowClick = (item) => {
-    console.log(item)
+  const handleRowClick = (e, item) => {
+    if (e.target.matches("button")) {
+      return
+    }
+    setItemSelected(item)
+    setIsDisplayOpen(true)
+    toast.message(JSON.stringify(itemSelected, null, 2))
   }
 
   useEffect(() => {
@@ -49,10 +58,17 @@ export function AppPage() {
 
   return (
     <div className="container mx-auto py-10 space-y-4" >
-      <Navbar resource={ resource } setResource={ setResource } />
-      <DialogResource
+      <Navbar />
+      <ResourceBar
         resource={ resource }
         setResource={ setResource }
+        updateTable={ updateTable }
+      />
+      <DisplayResource
+        resourceName={ resource }
+        resource={ itemSelected }
+        isDisplayOpen={ isDisplayOpen }
+        setIsDisplayOpen={ setIsDisplayOpen }
         updateTable={ updateTable }
       />
       <DataTable 
@@ -60,6 +76,7 @@ export function AppPage() {
         data={ resources }
         onRowClick={ handleRowClick }
       />
+      <Toaster richColors closeButton />
     </div>
   )
 }

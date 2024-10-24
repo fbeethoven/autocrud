@@ -1,0 +1,237 @@
+import { useRef, useState } from "react"
+import { useForm } from "react-hook-form"
+import { toast } from "sonner"
+import { zodResolver } from "@hookform/resolvers/zod"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
+import {
+{{- range .Tables }}
+  delete{{ toPascalCase .Name }},
+{{- end }}
+} from "@/components/columns"
+import { Resource } from "@/types/resources"
+{{- range .Tables }}
+import { {{ toPascalCase .Name }} } from "@/types/{{ toPascalCase .Name }}" 
+{{- end }}
+{{- range .Tables }}
+import { {{ toCamelCase .Name }}Schema } from "@/types/{{ toPascalCase .Name }}"
+{{- end }}
+import { Pencil } from "lucide-react"
+
+{{- range .Tables }}
+
+type Edit{{ toPascalCase .Name }}Props = {
+  resource: {{ toPascalCase .Name }}
+  setIsEditing: (bool)=>void
+  updateTable: ()=>void
+}
+
+const Edit{{ toPascalCase .Name }} = ({
+  resource,
+  setIsEditing,
+  updateTable,
+}: Edit{{ toPascalCase .Name }}) => {
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    resolver: zodResolver( {{ toCamelCase .Name }}Schema ),
+  })
+  const formRef = useRef(null)
+
+  const handleForm = async (data) => {
+{{- range .Fields }}
+{{- if .IsPrimaryKey }} 
+    const resourceId = resource.{{ .Name }}
+{{- else if .HasDefault }}{{ else }}
+    resource.{{ .Name }} = data.{{ .Name }}
+{{- end }}
+{{- end }}
+
+    console.log("submitted:", data)
+
+    const result = await fetch(
+      `http://127.0.0.1:8080/{{ .Name }}/${resourceId}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(resource)
+      }
+    )
+
+    toast.success("New {{ toPascalCase .Name }} updated")
+
+    setIsEditing(false)
+    updateTable()
+  }
+
+  return (
+    <form ref={formRef} className="space-y-4" onSubmit={ handleSubmit(handleForm) }>
+{{- range .Fields }}
+      <div className="grid w-full max-w-sm items-center gap-1.5">
+{{- if or .IsPrimaryKey .HasDefault }}
+        <p className="text-muted-foreground">{{ .Name }}</p>
+        <p>{ resource.{{ .Name }} }</p>
+      </div>
+{{- else}}
+        <Label htmlFor="{{ .Name }}" >
+            {{ .Name }}
+        </Label>
+{{- if eq .Type "timestamp" }}
+        <Input
+          id="{{ .Name }}"
+          type="date"
+          defaultValue={ resource.{{ .Name }} }
+          {...register("{{ .Name }}")}
+        />
+        { errors.{{ .Name }} && <p className="text-red-500">{errors.{{ .Name }}.message}</p>}
+      </div>
+{{- else }}
+        <Input
+          id="{{ .Name }}"
+          defaultValue={ resource.{{ .Name }} }
+          {...register("{{ .Name }}")}
+        />
+        { errors.{{ .Name }} && <p className="text-red-500">{errors.{{ .Name }}.message}</p>}
+      </div>
+{{- end }}
+{{- end }}
+{{- end }}
+      <div className="flex justify-end">
+        <Button variant="secondary" type="submit" >
+          Update {{ toPascalCase .Name }}
+        </Button >
+      </div>
+    </form>
+  )
+}
+
+interface {{ toPascalCase .Name }}CardProps {
+  resource: {{ toPascalCase .Name }}
+  setIsDisplayOpen: (bool)=>bool
+  updateTable: ()=>void
+}
+
+const {{ toPascalCase .Name }}Card = ({
+  resource,
+  setIsDisplayOpen,
+  updateTable,
+}: ResourceCardProps) => {
+  const [isEditing, setIsEditing] = useState<bool>(false)
+
+  const handleDelete = () => {
+    setIsDisplayOpen(false)
+    delete{{ toPascalCase .Name }}(resource, updateTable)
+  }
+
+  return (
+    <>
+      { isEditing ? (
+        <Edit{{ toPascalCase .Name }}
+          resource={ resource }
+          setIsEditing={ setIsEditing }
+          updateTable={ updateTable }
+        />
+      ) : (
+        <div className="space-y-4" >
+{{- range .Fields }}
+          <div className="grid w-full max-w-sm items-center gap-1.5">
+            <p className="text-muted-foreground">{{ .Name }}</p>
+            <p>{ resource.{{ .Name }} }</p>
+          </div>
+{{- end }}
+          <div className="flex justify-between">
+            <Button 
+              variant="secondary"
+              onClick={()=> setIsEditing(true)}
+            >
+            <Pencil/> Edit
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={ handleDelete }
+            >
+              Delete
+            </Button>
+          </div>
+        </div>
+        )
+      }
+    </>
+  )
+}
+{{- end }}
+
+interface ResourceCardProps {
+  resourceName: string
+  resource: Resource
+  updateTable: ()=>void
+  setIsDisplayOpen: (bool)=>bool
+}
+
+const ResourceCard = ({
+  resourceName,
+  resource,
+  updateTable,
+  setIsDisplayOpen,
+}: ResourceCardProps) => {
+
+  switch(resourceName) {
+{{- range .Tables }}
+    case "{{ .Name }}":
+      return (
+        <{{ toPascalCase .Name }}Card
+          resource={ resource }
+          updateTable={ updateTable }
+          setIsDisplayOpen={setIsDisplayOpen}
+        />
+      )
+{{- end }}
+  }
+
+  return (<></>)
+}
+
+interface DisplayDialogProps {
+  resourceName: string
+  resource: Resource
+  isDisplayOpen: bool
+  setIsDisplayOpen: (bool)=>bool
+  updateTable: ()=>void
+}
+
+export const DisplayResource = ({
+  resourceName,
+  resource,
+  isDisplayOpen,
+  setIsDisplayOpen,
+  updateTable,
+}: DisplayResourceProp
+) => {
+  const makeTitle = (snakeCase: string): string => {
+    return snakeCase.split("_").map((item)=> {
+      return item.charAt(0).toUpperCase() + item.slice(1)
+    }).join(" ")
+  }
+
+  return (
+    <Dialog open={ isDisplayOpen } onOpenChange={ setIsDisplayOpen } >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{ makeTitle(resourceName) }</DialogTitle>
+          <DialogDescription />
+        </DialogHeader>
+        <ResourceCard 
+          resourceName={resourceName}
+          resource={resource}
+          updateTable={updateTable}
+          setIsDisplayOpen={setIsDisplayOpen}
+        />
+      </DialogContent>
+    </Dialog>
+  )
+}

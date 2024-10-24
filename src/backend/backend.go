@@ -24,6 +24,8 @@ func New(
 }
 
 func (b BackendGeneratorImpl) Generate() {
+	codegen.SetTemplateDir()
+
 	projectName := "backend"
 	err := config.MultiRunCmdInDir(
 		b.Directories.Backend,
@@ -53,7 +55,7 @@ func (b BackendGeneratorImpl) Generate() {
 
 	filePath := b.Directories.Backend + "/src/main.go"
 
-	err = codegen.GenerateMain(filePath, projectName, b.Config)
+	err = GenerateMain(filePath, projectName, b.Config)
 	if err != nil {
 		log.Printf("Error writing to file: %v", err)
 		return
@@ -65,7 +67,7 @@ func (b BackendGeneratorImpl) Generate() {
 
 	for _, table := range b.Config.Schema.Tables {
 		destination := modelsDir + table.Name + ".go"
-		err = codegen.GenerateModel(destination, table)
+		err = GenerateModel(destination, table)
 		if err != nil {
 			log.Printf("Error writing to file: %v", err)
 			return
@@ -77,12 +79,12 @@ func (b BackendGeneratorImpl) Generate() {
 	daoDir := b.Directories.Backend + "/src/dao/"
 	for _, table := range b.Config.Schema.Tables {
 		destination := daoDir + table.Name + "DAO.go"
-		daoData := codegen.DAOData{
+		daoData := DAOData{
 			ProjectName:  projectName,
 			Table:        table,
 			DatabasePath: b.Directories.DatabasePath,
 		}
-		err = codegen.GenerateDAO(destination, daoData)
+		err = GenerateDAO(destination, daoData)
 		if err != nil {
 			log.Printf("Error writing to file: %v", err)
 			return
@@ -94,7 +96,7 @@ func (b BackendGeneratorImpl) Generate() {
 	controllerDir := b.Directories.Backend + "/src/controller/"
 
 	destination := controllerDir + "controller.go"
-	err = codegen.GenerateControllerRouter(destination, projectName)
+	err = GenerateControllerRouter(destination, projectName)
 	if err != nil {
 		log.Printf("Error writing to file: %v", err)
 		return
@@ -102,7 +104,7 @@ func (b BackendGeneratorImpl) Generate() {
 
 	for _, table := range b.Config.Schema.Tables {
 		destination := controllerDir + table.Name + "Controller.go"
-		err = codegen.GenerateController(destination, projectName, table)
+		err = GenerateController(destination, projectName, table)
 		if err != nil {
 			log.Printf("Error writing to file: %v", err)
 			return

@@ -1,0 +1,45 @@
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { DialogResource } from "@/components/DialogResource"
+
+
+interface ResourceBarProps {
+  resource: string
+  setResource: (string)=>string
+  updateTable: ()=>void
+}
+
+export const ResourceBar = ({
+  resource,
+  setResource,
+  updateTable,
+}: ResourceBarProps) => {
+  const handleSelect = (value: string) => {
+    setResource(value)
+  }
+
+  return (
+    <div className="container mx-auto flex justify-between items-center p-4">
+      <Select defaultValue={ resource } onValueChange={ handleSelect }>
+        <SelectTrigger className="w-[180px]" >
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+{{- range .Tables }}
+          <SelectItem value="{{ .Name }}">{{ toPascalCase .Name }}</SelectItem>
+{{- end }}
+        </SelectContent>
+      </Select>
+      <DialogResource
+        resource={ resource }
+        setResource={ setResource }
+        updateTable={ updateTable }
+      />
+    </div>
+  )
+}

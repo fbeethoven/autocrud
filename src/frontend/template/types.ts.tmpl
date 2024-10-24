@@ -1,0 +1,21 @@
+import { z } from "zod"
+
+export type {{ toPascalCase .Name }} = {
+{{- range .Fields }}
+    {{ .Name }}: {{ getType .Type -}}
+{{- end }}
+}
+
+export const {{ toCamelCase .Name }}Schema = z.object({
+{{- range .Fields }}
+{{- if or .IsPrimaryKey .HasDefault }}{{ else }}
+{{- if eq .Type "timestamp" }}
+    {{ .Name }}: z.coerce.date(),
+{{- else if eq .Type "int" }}
+    {{ .Name }}: z.coerce.number().int(),
+{{- else }}
+    {{ .Name }}: z.string(),
+{{- end }}
+{{- end }}
+{{- end }}
+})

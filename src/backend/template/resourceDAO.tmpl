@@ -97,7 +97,7 @@ func (r {{ .Resource }}DAO) UpdateResource(in *models.{{ .Resource }}) error {
 
     _, err = stmt.Exec(
 {{- range .Fields }}
-{{- if .IsPrimaryKey }}{{ else }}
+{{- if or .IsPrimaryKey .HasDefault }}{{ else }}
         in.{{ toPascalCase .Name }},
 {{- end }}
 {{- end }}
