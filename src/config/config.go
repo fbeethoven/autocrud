@@ -9,6 +9,8 @@ import (
 	"os/exec"
 
 	"gopkg.in/yaml.v2"
+
+	"github.com/fbeethoven/autocrud/src/codegen"
 )
 
 const Version string = "v0.1.0"
@@ -198,4 +200,9 @@ func MultiRunCmdInDir(dirPath string, cmds ...Command) error {
 	}
 
 	return nil
+}
+
+func Generate() {
+	codegen.SetTemplateDir()
+	codegen.GeneratorFactory("config.yaml", "config.yaml")()
 }

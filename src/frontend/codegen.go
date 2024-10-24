@@ -5,8 +5,8 @@ import (
 	"log"
 	"text/template"
 
-	"autocrud/src/codegen"
-	"autocrud/src/config"
+	"github.com/fbeethoven/autocrud/src/codegen"
+	"github.com/fbeethoven/autocrud/src/config"
 )
 
 func GenerateResources(destDir string, tables []config.TableSchema) error {

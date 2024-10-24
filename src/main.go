@@ -3,14 +3,22 @@ package main
 import (
 	"log"
 
-	"autocrud/src/backend"
-	"autocrud/src/config"
-	"autocrud/src/database"
-	"autocrud/src/frontend"
+	"github.com/fbeethoven/autocrud/src/backend"
+	"github.com/fbeethoven/autocrud/src/cmd"
+	"github.com/fbeethoven/autocrud/src/config"
+	"github.com/fbeethoven/autocrud/src/database"
+	"github.com/fbeethoven/autocrud/src/frontend"
 )
 
 func main() {
-	conf, err := config.Parse("config_test.yaml")
+	args := cmd.GetArgs()
+
+	if args.GenerateConfig {
+		config.Generate()
+		return
+	}
+
+	conf, err := config.Parse(args.ConfigName)
 	if err != nil {
 		log.Printf("error reading config: %v", err)
 		return

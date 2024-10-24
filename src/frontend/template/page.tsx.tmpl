@@ -9,7 +9,7 @@ import { Resource, Resources, resourceName } from "@/types/resources"
 import { Navbar } from "@/components/Navbar"
 import { ResourceBar } from "@/components/ResourceBar"
 import { DisplayResource } from "@/components/DisplayResource"
-import { Toaster, toast } from "sonner"
+import { Toaster } from "sonner"
 
 const getColumns = (
   resource: string,
@@ -41,7 +41,6 @@ export function AppPage() {
     }
     setItemSelected(item)
     setIsDisplayOpen(true)
-    toast.message(JSON.stringify(itemSelected, null, 2))
   }
 
   useEffect(() => {
