@@ -3,7 +3,7 @@
 all: run clean
 
 run: 
-	go run ./src/main.go -f config_test.yaml;
+	go run . -f config_test.yaml;
 
 bexec:
 	cd myapitest/backend/ && go run ./src/main.go ;
