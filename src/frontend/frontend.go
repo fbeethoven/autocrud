@@ -41,7 +41,7 @@ func (f FrontendGeneratorImpl) Generate() {
 		config.Command{
 			Cmd: "npm",
 			Args: []string{
-				"install", "-D", "tailwindcss", "postcss", "autoprefixer",
+				"install", "-D", "tailwindcss@3", "postcss", "autoprefixer",
 			},
 		},
 		config.Command{
@@ -52,7 +52,11 @@ func (f FrontendGeneratorImpl) Generate() {
 		},
 		config.Command{
 			Cmd:  "internal",
-			Func: codegen.GeneratorFactory("tailwindConfig.tmpl", "tailwind.config.js"),
+			Func: codegen.GeneratorFactory("tailwind.config.tmpl", "tailwind.config.js"),
+		},
+		config.Command{
+			Cmd:  "internal",
+			Func: codegen.GeneratorFactory("postcss.config.js.tmpl", "postcss.config.js"),
 		},
 		config.Command{
 			Cmd:  "internal",
@@ -70,12 +74,12 @@ func (f FrontendGeneratorImpl) Generate() {
 		},
 		config.Command{
 			Cmd:  "internal",
-			Func: codegen.GeneratorFactory("viteConfig.tmpl", "vite.config.ts"),
+			Func: codegen.GeneratorFactory("vite.config.tmpl", "vite.config.ts"),
 		},
 		config.Command{
 			Cmd: "npx",
 			Args: []string{
-				"shadcn@latest", "init", "--defaults",
+				"shadcn@2.3.0", "init", "--defaults",
 			},
 		},
 		config.Command{
@@ -89,7 +93,7 @@ func (f FrontendGeneratorImpl) Generate() {
 		config.Command{
 			Cmd: "npx",
 			Args: []string{
-				"shadcn@latest", "add",
+				"shadcn@2.3.0", "add",
 				"button", "input", "label", "select",
 				"dialog", "table",
 			},
